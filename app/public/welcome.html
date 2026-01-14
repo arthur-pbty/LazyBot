@@ -7,8 +7,13 @@
   <h1 id="greeting">Chargement...</h1>
   <img id="avatar" src="" alt="Avatar">
 
+  <a id="invite-link" href="#">Ajouter le bot à votre serveur</a>
+  
+  <h2>Mes serveurs :</h2>
+  <ul id="guilds-list"></ul> <!-- Ici on va lister les guilds -->
+
   <script>
-    // Récupérer l'objet user depuis le serveur
+    // --- Affichage des infos utilisateur ---
     fetch("/api/user")
       .then(res => res.json())
       .then(user => {
@@ -17,6 +22,43 @@
       })
       .catch(() => {
         document.getElementById("greeting").textContent = "Utilisateur non connecté.";
+      });
+
+    // --- Affichage des guilds de l'utilisateur ---
+    fetch("/api/guilds")
+      .then(res => res.json())
+      .then(guilds => {
+        const list = document.getElementById("guilds-list");
+        if (guilds.length === 0) {
+          list.innerHTML = "<li>Aucun serveur disponible</li>";
+        } else {
+          guilds.forEach(g => {
+            const li = document.createElement("li");
+            li.textContent = g.name;
+            li.style.cursor = "pointer"; // change le curseur pour montrer que c'est cliquable
+            li.style.padding = "5px";
+            li.style.border = "1px solid #ccc";
+            li.style.margin = "5px 0";
+            li.addEventListener("click", () => {
+              // Action quand on clique : exemple, redirection vers une page de configuration pour ce serveur
+              window.location.href = `/guild/${g.id}`;
+            });
+            list.appendChild(li);
+          });
+        }
+      })
+      .catch(() => {
+        document.getElementById("guilds-list").innerHTML = "<li>Impossible de récupérer les guilds.</li>";
+      });
+    
+    fetch("/invite-bot")
+      .then(res => res.json())
+      .then(data => {
+        const link = document.getElementById("invite-link");
+        link.href = data.url; // met le lien dynamique
+      })
+      .catch(() => {
+        console.log("Impossible de récupérer le lien du bot.");
       });
   </script>
 </body>
