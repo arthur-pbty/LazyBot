@@ -1,0 +1,32 @@
+{
+  "name": "lazybot",
+  "version": "1.0.0",
+  "description": "Un bot Discord configurable via un site web.",
+  "keywords": [
+    "Discord",
+    "Bot",
+    "WebApp"
+  ],
+  "homepage": "https://github.com/arthur-pbty/LazyBot#readme",
+  "bugs": {
+    "url": "https://github.com/arthur-pbty/LazyBot/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arthur-pbty/LazyBot.git"
+  },
+  "license": "ISC",
+  "author": "Arthur Pbty",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cross-fetch": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "node-fetch": "^2.7.0"
+  }
+}

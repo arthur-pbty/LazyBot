@@ -1,0 +1,13 @@
+services:
+  web:
+    image: node:20
+    container_name: discord_bot_web
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - ./.env
+    command: sh -c "npm install && node server.js"
+    restart: unless-stopped

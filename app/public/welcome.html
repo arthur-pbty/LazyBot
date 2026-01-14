@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bienvenue</title>
+</head>
+<body>
+  <h1 id="greeting">Chargement...</h1>
+  <img id="avatar" src="" alt="Avatar">
+
+  <script>
+    // Récupérer l'objet user depuis le serveur
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(user => {
+        document.getElementById("greeting").textContent = `Salut ${user.username}#${user.discriminator} !`;
+        document.getElementById("avatar").src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+      })
+      .catch(() => {
+        document.getElementById("greeting").textContent = "Utilisateur non connecté.";
+      });
+  </script>
+</body>
+</html>
