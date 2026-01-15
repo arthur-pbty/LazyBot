@@ -114,6 +114,41 @@ app.get("/api/guilds", (req, res) => {
     res.json({ url });
   });
 
+  // Servir le dashboard par serveur
+  app.get("/guild/:guildId", (req, res) => {
+    const guildId = req.params.guildId;
+    const userGuilds = req.session.guilds;
+
+    // Vérifie que l'utilisateur est connecté et a admin sur ce serveur
+    if (!userGuilds) return res.redirect("/"); // ou une page de connexion
+    const guildValid = userGuilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+    if (!guildValid) return res.send("Accès interdit : vous n'êtes pas admin sur ce serveur.");
+
+    // Redirige vers la page HTML statique du dashboard
+    res.sendFile(path.join(__dirname, "public", "guild.html"));
+  });
+
+  // Exemple : sauvegarde config d'un serveur
+  app.post("/api/bot/save-config", express.json(), (req, res) => {
+    const { guildId, autoMessage } = req.body;
+    const userGuilds = req.session.guilds;
+
+    // Vérifie admin + bot présent
+    const guildValid = userGuilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+    if (!guildValid) return res.status(403).json({ error: "Accès interdit" });
+
+    // Sauvegarde dans un objet serveur côté serveur (ou DB)
+    if (!global.guildConfigs) global.guildConfigs = {};
+    global.guildConfigs[guildId] = { autoMessage };
+
+    res.json({ success: true });
+  });
+
+
 
   res.json(validGuilds);
 });

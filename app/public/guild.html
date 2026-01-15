@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard du serveur</title>
+</head>
+<body>
+  <h1 id="guild-name">Chargement...</h1>
+
+  <form id="event-form">
+    <label>Message automatique :</label>
+    <input type="text" id="auto-message" placeholder="Ex: Bonjour à tous !">
+    <button type="submit">Sauvegarder</button>
+  </form>
+
+  <div id="status"></div>
+
+  <script>
+    const guildId = window.location.pathname.split("/")[2]; // récupère l'ID du serveur
+
+    // Afficher le nom du serveur
+    fetch("/api/guilds")
+      .then(res => res.json())
+      .then(guilds => {
+        const guild = guilds.find(g => g.id === guildId);
+        if (!guild) {
+          document.getElementById("guild-name").textContent = "Serveur introuvable ou accès refusé";
+          return;
+        }
+        document.getElementById("guild-name").textContent = `Dashboard : ${guild.name}`;
+      });
+
+    // Envoyer la config du formulaire au serveur
+    const form = document.getElementById("event-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = document.getElementById("auto-message").value;
+
+      const res = await fetch("/api/bot/save-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guildId, autoMessage: message })
+      });
+
+      const data = await res.json();
+      document.getElementById("status").textContent = data.success ? "Config sauvegardée ✅" : "Erreur ❌";
+    });
+  </script>
+</body>
+</html>
