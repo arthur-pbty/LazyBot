@@ -88,6 +88,49 @@
       <button type="submit">Sauvegarder</button>
       <div id="status-goodbye-form"></div>
     </form>
+
+
+    <form id="autorole-newuser-form">
+      <label>
+        <input type="checkbox" id="autorole-enabled" />
+        Activer le rôle automatique pour les nouveaux membres
+      </label>
+
+      <label>
+        Rôle à attribuer :
+        <br />
+        <select id="autorole-role">
+        </select>
+      </label>
+
+      <button type="submit">Sauvegarder</button>
+      <div id="status-autorole-form"></div>
+    </form>
+
+
+    <form id="autorole-vocal-form">
+      <label>
+        <input type="checkbox" id="autorole-vocal-enabled" />
+        Activer le rôle automatique pour les membres en vocal
+      </label>
+
+      <label>
+        Rôle à attribuer :
+        <br />
+        <select id="autorole-vocal-role">
+        </select>
+      </label>
+
+      <label>
+        Salon à éviter :
+        <br />
+        <select id="autorole-vocal-exclude-channel" multiple size="5">
+        </select>
+      </label>
+
+      <button type="submit">Sauvegarder</button>
+      <div id="status-autorole-vocal-form"></div>
+    </form>
     
 
     <script>
@@ -106,6 +149,68 @@
           document.getElementById(
             "guild-name"
           ).textContent = `Dashboard : ${guild.name}`;
+        });
+      
+
+      fetch(`/api/bot/get-text-channels/${guildId}`)
+        .then(res => res.json())
+        .then(channels => {
+          const selectWelcome = document.getElementById("welcome-channel");
+          const selectGoodbye = document.getElementById("goodbye-channel");
+          channels.forEach(channel => {
+            const option = document.createElement("option");
+            option.value = channel.id;
+            option.textContent = `#${channel.name}`;
+            selectWelcome.appendChild(option);
+            selectGoodbye.appendChild(option.cloneNode(true));
+          });
+        });
+
+      
+
+      const selectExclude = document.getElementById("autorole-vocal-exclude-channel");
+      selectExclude.innerHTML = ""; // reset
+
+      fetch(`/api/bot/get-voice-channels/${guildId}`)
+        .then(res => res.json())
+        .then(channels => {
+          channels.forEach(channel => {
+            const option = document.createElement("option");
+            option.value = channel.id;
+            option.textContent = `#${channel.name}`;
+            selectExclude.appendChild(option);
+          });
+          return fetch(`/api/bot/get-autorole-vocal-config/${guildId}`);
+        })
+        .then(res => res.json())
+        .then(cfg => {
+          document.getElementById("autorole-vocal-enabled").checked = !!cfg.enabled;
+          document.getElementById("autorole-vocal-role").value = cfg.roleId ?? "";
+
+          const excluded = Array.isArray(cfg.excludeChannelIds)
+            ? cfg.excludeChannelIds.map(String) // sécurité
+            : [];
+
+          Array.from(selectExclude.options).forEach(option => {
+            option.selected = excluded.includes(option.value);
+          });
+        })
+        .catch(console.error);
+
+
+
+      fetch(`/api/bot/get-roles/${guildId}`)
+        .then(res => res.json())
+        .then(roles => {
+          const selectAutorole = document.getElementById("autorole-role");
+          const selectAutoroleVocal = document.getElementById("autorole-vocal-role");
+          roles.forEach(role => {
+            const option = document.createElement("option");
+            option.value = role.id;
+            option.textContent = role.name;
+            selectAutorole.appendChild(option);
+            selectAutoroleVocal.appendChild(option.cloneNode(true));
+          });
         });
 
 
@@ -159,19 +264,52 @@
       });
 
 
-      fetch(`/api/bot/get-text-channels/${guildId}`)
-        .then(res => res.json())
-        .then(channels => {
-          const selectWelcome = document.getElementById("welcome-channel");
-          const selectGoodbye = document.getElementById("goodbye-channel");
-          channels.forEach(channel => {
-            const option = document.createElement("option");
-            option.value = channel.id;
-            option.textContent = `#${channel.name}`;
-            selectWelcome.appendChild(option);
-            selectGoodbye.appendChild(option.cloneNode(true));
-          });
+      const autoroleNewUserForm = document.getElementById("autorole-newuser-form");
+      autoroleNewUserForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const enabled = document.getElementById("autorole-enabled").checked;
+        const roleId = document.getElementById("autorole-role").value;
+
+        const res = await fetch("/api/bot/save-autorole-newuser-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guildId,
+            roleId,
+            enabled,
+          }),
         });
+
+        const data = await res.json();
+        document.getElementById("status-autorole-form").textContent = data.success
+          ? "Config d'auto-rôle pour nouveaux membres sauvegardée ✅"
+          : "Erreur ❌";
+      });
+
+
+      const autoroleVocalForm = document.getElementById("autorole-vocal-form");
+      autoroleVocalForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const enabled = document.getElementById("autorole-vocal-enabled").checked;
+        const roleId = document.getElementById("autorole-vocal-role").value;
+        const excludeChannelSelect = document.getElementById("autorole-vocal-exclude-channel");
+        const excludeChannelId = Array.from(excludeChannelSelect.selectedOptions).map(option => option.value);
+
+        const res = await fetch("/api/bot/save-autorole-vocal-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guildId,
+            roleId,
+            excludeChannelId,
+            enabled,
+          }),
+        });
+        const data = await res.json();
+        document.getElementById("status-autorole-vocal-form").textContent = data.success
+          ? "Config d'auto-rôle pour membres en vocal sauvegardée ✅"
+          : "Erreur ❌";
+      });
 
 
       fetch(`/api/bot/get-welcome-config/${guildId}`)
@@ -190,6 +328,16 @@
           document.getElementById("goodbye-channel").value = cfg.channelId;
           document.getElementById("goodbye-message").value = cfg.message;
         });
+
+
+      fetch(`/api/bot/get-autorole-newuser-config/${guildId}`)
+        .then(res => res.json())
+        .then(cfg => {
+          document.getElementById("autorole-enabled").checked = cfg.enabled;
+          document.getElementById("autorole-role").value = cfg.roleId;
+        });
+
+
     </script>
   </body>
 </html>

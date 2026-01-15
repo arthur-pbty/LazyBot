@@ -24,6 +24,19 @@ db.exec(`
     enabled INTEGER NOT NULL,
     message TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS autorole_newuser_config (
+    guild_id TEXT PRIMARY KEY,
+    role_id TEXT,
+    enabled INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS autorole_vocal_config (
+    guild_id TEXT PRIMARY KEY,
+    role_id TEXT,
+    exclude_channel_ids TEXT,
+    enabled INTEGER NOT NULL
+  );
 `);
 
 module.exports = db;
