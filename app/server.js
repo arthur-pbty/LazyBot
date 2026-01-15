@@ -5,6 +5,9 @@ const session = require("express-session");
 const fetch = require("cross-fetch"); // fetch compatible Node
 const path = require("path");
 
+// importer la DB
+const db = require("./db");
+
 // importer le bot
 const client = require("./bot"); 
 
@@ -130,25 +133,83 @@ app.get("/api/guilds", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "guild.html"));
   });
 
-  // Exemple : sauvegarde config d'un serveur
-  app.post("/api/bot/save-config", express.json(), (req, res) => {
-    const { guildId, autoMessage } = req.body;
-    const userGuilds = req.session.guilds;
+  // API pour sauvegarder la configuration de bienvenue
+  app.post("/api/bot/save-welcome-config", express.json(), (req, res) => {
+    const { guildId, channelId, welcomeEnabled, welcomeMessage } = req.body;
 
-    // Vérifie admin + bot présent
-    const guildValid = userGuilds.find(
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
       g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
     );
-    if (!guildValid) return res.status(403).json({ error: "Accès interdit" });
 
-    // Sauvegarde dans un objet serveur côté serveur (ou DB)
-    if (!global.guildConfigs) global.guildConfigs = {};
-    global.guildConfigs[guildId] = { autoMessage };
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
 
-    res.json({ success: true });
+    db.run(
+      `
+      INSERT INTO welcome_config (guild_id, channel_id, enabled, message)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(guild_id)
+      DO UPDATE SET channel_id = ?, enabled = ?, message = ?
+      `,
+      [
+        guildId,
+        channelId,
+        welcomeEnabled ? 1 : 0,
+        welcomeMessage,
+        channelId,
+        welcomeEnabled ? 1 : 0,
+        welcomeMessage
+      ],
+      err => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
   });
 
+  app.get("/api/bot/get-welcome-config/:guildId", (req, res) => {
+    const { guildId } = req.params;
 
+    db.get(
+      "SELECT enabled, channel_id, message FROM welcome_config WHERE guild_id = ?",
+      [guildId],
+      (err, row) => {
+        if (err || !row) {
+          return res.json({ enabled: false, channelId: null, message: "" });
+        }
+        res.json({
+          enabled: !!row.enabled,
+          channelId: row.channel_id,
+          message: row.message
+        });
+      }
+    );
+  });
+
+  app.get("/api/bot/get-text-channels/:guildId", (req, res) => {
+    const { guildId } = req.params;
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) {
+      return res.status(404).json({ error: "Serveur non trouvé" });
+    }
+
+    const channels = guild.channels.cache
+      .filter(channel => channel.isTextBased())
+      .map(channel => ({
+        id: channel.id,
+        name: channel.name
+      }));
+
+    res.json(channels);
+  });
 
   res.json(validGuilds);
 });

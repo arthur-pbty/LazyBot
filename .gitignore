@@ -1,4 +1,6 @@
 .vscode/
+*.sqlite
+*.db
 
 # Logs
 logs

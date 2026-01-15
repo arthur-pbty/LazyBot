@@ -1,49 +1,117 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Dashboard du serveur</title>
-</head>
-<body>
-  <h1 id="guild-name">Chargement...</h1>
+  <head>
+    <title>Dashboard du serveur</title>
+  </head>
+  <body>
+    <h1 id="guild-name">Chargement...</h1>
 
-  <form id="event-form">
-    <label>Message automatique :</label>
-    <input type="text" id="auto-message" placeholder="Ex: Bonjour à tous !">
-    <button type="submit">Sauvegarder</button>
-  </form>
+    <form id="welcome-form">
+      <label>
+        <input type="checkbox" id="welcome-enabled" />
+        Activer le message de bienvenue
+      </label>
 
-  <div id="status"></div>
+      <br /><br />
 
-  <script>
-    const guildId = window.location.pathname.split("/")[2]; // récupère l'ID du serveur
+      <label>
+        Canal de bienvenue :
+        <br />
+        <select id="welcome-channel">
+        </select>
+      </label>
 
-    // Afficher le nom du serveur
-    fetch("/api/guilds")
-      .then(res => res.json())
-      .then(guilds => {
-        const guild = guilds.find(g => g.id === guildId);
-        if (!guild) {
-          document.getElementById("guild-name").textContent = "Serveur introuvable ou accès refusé";
-          return;
-        }
-        document.getElementById("guild-name").textContent = `Dashboard : ${guild.name}`;
-      });
+      <br /><br />
 
-    // Envoyer la config du formulaire au serveur
-    const form = document.getElementById("event-form");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const message = document.getElementById("auto-message").value;
+      <label>
+        Message :
+        <br />
+        <textarea
+          id="welcome-message"
+          rows="4"
+          cols="50"
+          placeholder="Ex : Bienvenue {user} sur {server} 🎉"
+        ></textarea>
+      </label>
 
-      const res = await fetch("/api/bot/save-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guildId, autoMessage: message })
-      });
+      <br /><br />
 
-      const data = await res.json();
-      document.getElementById("status").textContent = data.success ? "Config sauvegardée ✅" : "Erreur ❌";
-    });
-  </script>
-</body>
+      <small>
+        Variables disponibles :
+        <ul>
+          <li><code>{user}</code> → nom de l'utilisateur</li>
+          <li><code>{mention}</code> → mention de l'utilisateur</li>
+          <li><code>{server}</code> → nom du serveur</li>
+        </ul>
+      </small>
+
+      <button type="submit">Sauvegarder</button>
+    </form>
+
+    <div id="status"></div>
+
+    <script>
+      const guildId = window.location.pathname.split("/")[2]; // récupère l'ID du serveur
+
+      // Afficher le nom du serveur
+      fetch("/api/guilds")
+        .then((res) => res.json())
+        .then((guilds) => {
+          const guild = guilds.find((g) => g.id === guildId);
+          if (!guild) {
+            document.getElementById("guild-name").textContent =
+              "Serveur introuvable ou accès refusé";
+            return;
+          }
+          document.getElementById(
+            "guild-name"
+          ).textContent = `Dashboard : ${guild.name}`;
+        });
+
+
+        const welcomeForm = document.getElementById("welcome-form");
+        welcomeForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const enabled = document.getElementById("welcome-enabled").checked;
+          const channelId = document.getElementById("welcome-channel").value;
+          const message = document.getElementById("welcome-message").value;
+
+          const res = await fetch("/api/bot/save-welcome-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              guildId,
+              channelId,
+              welcomeMessage: message,
+              welcomeEnabled: enabled,
+            }),
+          });
+
+          const data = await res.json();
+          document.getElementById("status").textContent = data.success
+            ? "Config de bienvenue sauvegardée ✅"
+            : "Erreur ❌";
+        });
+
+        fetch(`/api/bot/get-text-channels/${guildId}`)
+          .then(res => res.json())
+          .then(channels => {
+            const select = document.getElementById("welcome-channel");
+            channels.forEach(channel => {
+              const option = document.createElement("option");
+              option.value = channel.id;
+              option.textContent = `#${channel.name}`;
+              select.appendChild(option);
+            });
+          });
+
+        fetch(`/api/bot/get-welcome-config/${guildId}`)
+          .then(res => res.json())
+          .then(cfg => {
+            document.getElementById("welcome-enabled").checked = cfg.enabled;
+            document.getElementById("welcome-channel").value = cfg.channelId;
+            document.getElementById("welcome-message").value = cfg.message;
+          });
+    </script>
+  </body>
 </html>
