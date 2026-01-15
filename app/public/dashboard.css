@@ -1,105 +1,137 @@
-:root {
-  --bg: #0f1115;
-  --bg-card: #161a22;
-  --text: #e6e6eb;
-  --muted: #9aa0b4;
-  --primary: #5865F2; /* couleur Discord */
-  --primary-hover: #4752c4;
-  --border: #23283a;
-}
-
+/* ===== Reset minimal ===== */
 * {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* BODY */
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding: 0 20px;
+  background-color: #1e1f29; /* fond sombre type Discord */
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
 }
 
-/* NAVBAR */
+/* ===== Navigation ===== */
 nav {
+  width: 100%;
+  max-width: 800px;
   display: flex;
-  gap: 20px;
-  padding: 16px 24px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
+  justify-content: flex-start;
+  background-color: #2f3136;
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
 }
 
 nav a {
-  color: var(--muted);
+  color: #ffffff;
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.2s;
 }
 
 nav a:hover {
-  color: var(--text);
+  color: #5865f2;
 }
 
-/* TITRES */
+/* ===== Titres ===== */
 h1, h2 {
   text-align: center;
-  margin-top: 30px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
 }
 
 h2 {
-  margin-bottom: 20px;
-  color: var(--muted);
+  font-size: 1.8rem;
+  margin: 25px 0 10px 0;
+  border-bottom: 2px solid #5865f2;
+  display: inline-block;
+  padding-bottom: 5px;
 }
 
-/* AVATAR */
+/* ===== Avatar ===== */
 #avatar {
-  display: block;
-  margin: 20px auto;
-  width: 120px;
-  height: 120px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 3px solid var(--primary);
+  margin: 10px 0 20px 0;
+  border: 2px solid #5865f2;
 }
 
-/* BOUTON INVITE */
+/* ===== Bouton d'invitation ===== */
 #invite-link {
-  display: block;
-  width: fit-content;
-  margin: 20px auto;
-  padding: 12px 24px;
-  background: var(--primary);
+  display: inline-block;
+  background-color: #5865f2;
   color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
   text-decoration: none;
-  border-radius: 10px;
   font-weight: 600;
-  transition: background 0.2s ease, transform 0.1s ease;
+  margin-bottom: 30px;
+  transition: background 0.2s;
 }
 
 #invite-link:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  background-color: #4752c4;
 }
 
-/* LISTE DES GUILDS */
-#guilds-list {
-  max-width: 600px;
-  margin: 0 auto 40px auto;
+/* ===== Liste des guilds ===== */
+ul#guilds-list {
   list-style: none;
+  width: 100%;
+  max-width: 800px;
+  padding: 0;
 }
 
-#guilds-list li {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+ul#guilds-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 15px;
-  margin: 5px 0;
-  border-radius: 8px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background-color: #161a22;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s, color 0.2s;
 }
 
-#guilds-list li:hover {
-  background: var(--primary);
+ul#guilds-list li:hover {
+  background-color: #5865f2;
   color: white;
+}
+
+ul#guilds-list li img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  ul#guilds-list li {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  ul#guilds-list li img {
+    margin-bottom: 5px;
+  }
 }

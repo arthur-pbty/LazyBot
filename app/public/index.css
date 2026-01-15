@@ -1,103 +1,130 @@
-:root {
-  --bg: #0f1115;
-  --bg-card: #161a22;
-  --text: #e6e6eb;
-  --muted: #9aa0b4;
-  --primary: #5865F2; /* couleur Discord */
-  --primary-hover: #4752c4;
-  --border: #23283a;
-}
-
+/* ===== Reset minimal ===== */
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
+  background-color: #1e1f29; /* fond sombre type Discord */
+  color: #ffffff;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centre horizontalement */
+  justify-content: flex-start; /* commencer depuis le haut */
+  padding: 20px;
 }
 
-/* NAVBAR */
+/* ===== Navigation ===== */
 nav {
   display: flex;
-  gap: 20px;
-  padding: 16px 24px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2f3136;
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 800px; /* limite largeur nav */
 }
 
 nav a {
-  color: var(--muted);
+  color: #ffffff;
   text-decoration: none;
+  margin-right: 15px;
   font-weight: 500;
+  transition: color 0.2s;
 }
 
 nav a:hover {
-  color: var(--text);
+  color: #5865f2;
 }
 
-#profile {
-  margin-left: auto;
+#profil {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-#avatar {
-  width: 32px;
-  height: 32px;
+#profil img {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
 }
 
-#username {
-  color: var(--text);
-  font-weight: 500;
-}
-
 #logout {
-  color: var(--muted);
-  text-decoration: none;
+  background-color: #5865f2;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
 }
 
 #logout:hover {
-  color: var(--text);
+  background-color: #4752c4;
 }
 
-/* CONTENU */
+/* ===== Titres ===== */
+h1, h2 {
+  text-align: center; /* centre le texte */
+}
+
 h1 {
-  margin: 40px 0 10px;
-  text-align: center;
   font-size: 3rem;
+  margin-bottom: 20px;
+  color: #ffffff;
 }
 
 h2 {
-  margin-top: 40px;
-  text-align: center;
+  font-size: 1.8rem;
+  margin: 25px 0 10px 0;
+  color: #ffffff;
+  border-bottom: 2px solid #5865f2;
+  display: inline-block;
+  padding-bottom: 5px;
 }
 
-p {
-  text-align: center;
-  color: var(--muted);
-}
-
-/* BOUTON INVITE */
+/* ===== Bouton d'invitation ===== */
 #invite-link {
-  display: block;
-  width: fit-content;
-  margin: 30px auto;
-  padding: 14px 26px;
-  background: var(--primary);
+  display: inline-block;
+  background-color: #5865f2;
   color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
   text-decoration: none;
-  border-radius: 10px;
   font-weight: 600;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background 0.2s;
+  margin-bottom: 20px;
 }
 
 #invite-link:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  background-color: #4752c4;
+}
+
+/* ===== Listes ===== */
+ul {
+  list-style: disc inside;
+  margin: 10px 0 20px 0;
+  max-width: 700px;
+  text-align: left;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #profil {
+    gap: 5px;
+  }
 }
