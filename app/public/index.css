@@ -1,0 +1,103 @@
+:root {
+  --bg: #0f1115;
+  --bg-card: #161a22;
+  --text: #e6e6eb;
+  --muted: #9aa0b4;
+  --primary: #5865F2; /* couleur Discord */
+  --primary-hover: #4752c4;
+  --border: #23283a;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* NAVBAR */
+nav {
+  display: flex;
+  gap: 20px;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: var(--text);
+}
+
+#profile {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+#username {
+  color: var(--text);
+  font-weight: 500;
+}
+
+#logout {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+#logout:hover {
+  color: var(--text);
+}
+
+/* CONTENU */
+h1 {
+  margin: 40px 0 10px;
+  text-align: center;
+  font-size: 3rem;
+}
+
+h2 {
+  margin-top: 40px;
+  text-align: center;
+}
+
+p {
+  text-align: center;
+  color: var(--muted);
+}
+
+/* BOUTON INVITE */
+#invite-link {
+  display: block;
+  width: fit-content;
+  margin: 30px auto;
+  padding: 14px 26px;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+#invite-link:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}

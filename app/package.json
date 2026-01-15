@@ -23,6 +23,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "connect-sqlite3": "^0.9.16",
     "cross-fetch": "^4.1.0",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3",

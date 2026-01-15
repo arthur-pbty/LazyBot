@@ -2,6 +2,7 @@ require("dotenv").config(); // charge les variables depuis .env
 
 const express = require("express");
 const session = require("express-session");
+const SQLiteStore = require("connect-sqlite3")(session);
 const fetch = require("cross-fetch"); // fetch compatible Node
 const path = require("path");
 
@@ -20,9 +21,11 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 
 // --- Session setup ---
 app.use(session({
+  store: new SQLiteStore({ db: "sessions.sqlite", dir: "./" }),
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: { maxAge: 7*24*60*60*1000 } // 7 jours
 }));
 
 // --- Servir le dossier public ---
@@ -81,6 +84,13 @@ app.get("/auth/discord/callback", async (req, res) => {
     res.send("Erreur lors de la connexion Discord !");
   }
 });
+
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.redirect("/");
+});
+
 
 // --- API pour récupérer l'objet user côté front ---
 app.get("/api/user", (req, res) => {

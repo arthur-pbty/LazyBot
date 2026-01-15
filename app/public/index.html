@@ -2,14 +2,25 @@
 <html>
 <head>
   <title>LazyBot - Bot Discord</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
   <nav>
     <a href="/">Accueil</a>
     <a href="/dashboard">Tableau de bord</a>
+    <div id="profil">
+      <img id="avatar" src="" alt="Avatar">
+      <span id="username"></span>
+      <a id="logout" href="/logout">Se déconnecter</a>
+    </div>
   </nav>
   <h1>LazyBot</h1>
   <a id="invite-link" href="#">Ajouter à Discord</a>
+
+  <h2>Ajout du bot</h2>
+  <p>Message de bienvenue et d'au revoir personnalisables.</p>
 </body>
 <script>
   fetch("/invite-bot")
@@ -21,5 +32,21 @@
     .catch(() => {
       console.log("Impossible de récupérer le lien du bot.");
     });
+
+
+  fetch("/api/user")
+    .then(res => {
+      if (!res.ok) throw new Error("Utilisateur non connecté"); // gère les erreurs HTTP
+      return res.json();
+    })
+    .then(user => {
+      document.getElementById("username").textContent = `${user.username}`;
+      document.getElementById("avatar").src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+    })
+    .catch(() => {
+      const profilDiv = document.getElementById("profil");
+      profilDiv.style.display = "none";
+    });
+
 </script>
 </html>
