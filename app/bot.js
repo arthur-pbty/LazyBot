@@ -45,6 +45,28 @@ client.on(Events.GuildMemberAdd, member => {
 });
 
 
+client.on(Events.GuildMemberRemove, member => {
+  db.get(
+    "SELECT enabled, channel_id, message FROM goodbye_config WHERE guild_id = ?",
+    [member.guild.id],
+    (err, row) => {
+      if (err || !row || !row.enabled) return;
+
+      let msg = row.message;
+
+      msg = msg
+        .replace("{user}", member.user.username)
+        .replace("{server}", member.guild.name);
+
+      const channel = member.guild.channels.cache.get(row.channel_id);
+      if (channel) {
+        channel.send(msg);
+      }
+    }
+  );
+});
+
+
 client.login(process.env.BOT_TOKEN);
 
 module.exports = client;

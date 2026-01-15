@@ -10,13 +10,20 @@ const db = new sqlite3.Database(
 );
 
 // Création de la table si elle n'existe pas
-db.run(`
+db.exec(`
   CREATE TABLE IF NOT EXISTS welcome_config (
     guild_id TEXT PRIMARY KEY,
     channel_id TEXT,
     enabled INTEGER NOT NULL,
     message TEXT NOT NULL
-  )
+  );
+
+  CREATE TABLE IF NOT EXISTS goodbye_config (
+    guild_id TEXT PRIMARY KEY,
+    channel_id TEXT,
+    enabled INTEGER NOT NULL,
+    message TEXT NOT NULL
+  );
 `);
 
 module.exports = db;

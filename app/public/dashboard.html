@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bienvenue</title>
+  <title>Tableau de bord</title>
 </head>
 <body>
+  <nav>
+    <a href="/">Accueil</a>
+  </nav>
+
   <h1 id="greeting">Chargement...</h1>
   <img id="avatar" src="" alt="Avatar">
 
@@ -23,6 +27,7 @@
       .catch(() => {
         document.getElementById("greeting").textContent = "Utilisateur non connecté.";
       });
+
 
     // --- Affichage des guilds de l'utilisateur ---
     fetch("/api/guilds")
@@ -51,6 +56,7 @@
         document.getElementById("guilds-list").innerHTML = "<li>Impossible de récupérer les guilds.</li>";
       });
     
+
     fetch("/invite-bot")
       .then(res => res.json())
       .then(data => {

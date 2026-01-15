@@ -4,7 +4,13 @@
     <title>Dashboard du serveur</title>
   </head>
   <body>
+    <nav>
+      <a href="/">Accueil</a>
+      <a href="/dashboard">Tableau de bord</a>
+    </nav>
+
     <h1 id="guild-name">Chargement...</h1>
+
 
     <form id="welcome-form">
       <label>
@@ -12,16 +18,12 @@
         Activer le message de bienvenue
       </label>
 
-      <br /><br />
-
       <label>
         Canal de bienvenue :
         <br />
         <select id="welcome-channel">
         </select>
       </label>
-
-      <br /><br />
 
       <label>
         Message :
@@ -34,8 +36,6 @@
         ></textarea>
       </label>
 
-      <br /><br />
-
       <small>
         Variables disponibles :
         <ul>
@@ -46,9 +46,46 @@
       </small>
 
       <button type="submit">Sauvegarder</button>
+      <div id="status-welcome-form"></div>
     </form>
 
-    <div id="status"></div>
+
+    <form id="goodbye-form">
+      <label>
+        <input type="checkbox" id="goodbye-enabled" />
+        Activer le message d'au revoir
+      </label>
+
+      <label>
+        Canal d'au revoir :
+        <br />
+        <select id="goodbye-channel">
+        </select>
+      </label>
+
+      <label>
+        Message :
+        <br />
+        <textarea
+          id="goodbye-message"
+          rows="4"
+          cols="50"
+          placeholder="Ex : Au revoir {user}, on espère te revoir sur {server} 👋"
+        ></textarea>
+      </label>
+
+      <small>
+        Variables disponibles :
+        <ul>
+          <li><code>{user}</code> → nom de l'utilisateur</li>
+          <li><code>{server}</code> → nom du serveur</li>
+        </ul>
+      </small>
+
+      <button type="submit">Sauvegarder</button>
+      <div id="status-goodbye-form"></div>
+    </form>
+    
 
     <script>
       const guildId = window.location.pathname.split("/")[2]; // récupère l'ID du serveur
@@ -69,49 +106,87 @@
         });
 
 
-        const welcomeForm = document.getElementById("welcome-form");
-        welcomeForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const enabled = document.getElementById("welcome-enabled").checked;
-          const channelId = document.getElementById("welcome-channel").value;
-          const message = document.getElementById("welcome-message").value;
+      const welcomeForm = document.getElementById("welcome-form");
+      welcomeForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const enabled = document.getElementById("welcome-enabled").checked;
+        const channelId = document.getElementById("welcome-channel").value;
+        const message = document.getElementById("welcome-message").value;
 
-          const res = await fetch("/api/bot/save-welcome-config", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              guildId,
-              channelId,
-              welcomeMessage: message,
-              welcomeEnabled: enabled,
-            }),
-          });
-
-          const data = await res.json();
-          document.getElementById("status").textContent = data.success
-            ? "Config de bienvenue sauvegardée ✅"
-            : "Erreur ❌";
+        const res = await fetch("/api/bot/save-welcome-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guildId,
+            channelId,
+            welcomeMessage: message,
+            welcomeEnabled: enabled,
+          }),
         });
 
-        fetch(`/api/bot/get-text-channels/${guildId}`)
-          .then(res => res.json())
-          .then(channels => {
-            const select = document.getElementById("welcome-channel");
-            channels.forEach(channel => {
-              const option = document.createElement("option");
-              option.value = channel.id;
-              option.textContent = `#${channel.name}`;
-              select.appendChild(option);
-            });
-          });
+        const data = await res.json();
+        document.getElementById("status-welcome-form").textContent = data.success
+          ? "Config de bienvenue sauvegardée ✅"
+          : "Erreur ❌";
+      });
 
-        fetch(`/api/bot/get-welcome-config/${guildId}`)
-          .then(res => res.json())
-          .then(cfg => {
-            document.getElementById("welcome-enabled").checked = cfg.enabled;
-            document.getElementById("welcome-channel").value = cfg.channelId;
-            document.getElementById("welcome-message").value = cfg.message;
+
+      const goodbyeForm = document.getElementById("goodbye-form");
+      goodbyeForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const enabled = document.getElementById("goodbye-enabled").checked;
+        const channelId = document.getElementById("goodbye-channel").value;
+        const message = document.getElementById("goodbye-message").value;
+
+        const res = await fetch("/api/bot/save-goodbye-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guildId,
+            channelId,
+            goodbyeMessage: message,
+            goodbyeEnabled: enabled,
+          }),
+        });
+
+        const data = await res.json();
+        document.getElementById("status-goodbye-form").textContent = data.success
+          ? "Config d'au revoir sauvegardée ✅"
+          : "Erreur ❌";
+      });
+
+
+      fetch(`/api/bot/get-text-channels/${guildId}`)
+        .then(res => res.json())
+        .then(channels => {
+          const selectWelcome = document.getElementById("welcome-channel");
+          const selectGoodbye = document.getElementById("goodbye-channel");
+          channels.forEach(channel => {
+            const option = document.createElement("option");
+            option.value = channel.id;
+            option.textContent = `#${channel.name}`;
+            selectWelcome.appendChild(option);
+            selectGoodbye.appendChild(option.cloneNode(true));
           });
+        });
+
+
+      fetch(`/api/bot/get-welcome-config/${guildId}`)
+        .then(res => res.json())
+        .then(cfg => {
+          document.getElementById("welcome-enabled").checked = cfg.enabled;
+          document.getElementById("welcome-channel").value = cfg.channelId;
+          document.getElementById("welcome-message").value = cfg.message;
+        });
+
+
+      fetch(`/api/bot/get-goodbye-config/${guildId}`)
+        .then(res => res.json())
+        .then(cfg => {
+          document.getElementById("goodbye-enabled").checked = cfg.enabled;
+          document.getElementById("goodbye-channel").value = cfg.channelId;
+          document.getElementById("goodbye-message").value = cfg.message;
+        });
     </script>
   </body>
 </html>

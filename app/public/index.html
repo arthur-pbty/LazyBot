@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Connexion Discord</title>
+  <title>LazyBot - Bot Discord</title>
 </head>
 <body>
-  <h1>Bienvenue !</h1>
-  <a href="/auth/discord">
-    <button>Se connecter avec Discord</button>
-  </a>
+  <nav>
+    <a href="/">Accueil</a>
+    <a href="/dashboard">Tableau de bord</a>
+  </nav>
+  <h1>LazyBot</h1>
+  <a id="invite-link" href="#">Ajouter à Discord</a>
 </body>
+<script>
+  fetch("/invite-bot")
+    .then(res => res.json())
+    .then(data => {
+      const link = document.getElementById("invite-link");
+      link.href = data.url; // met le lien dynamique
+    })
+    .catch(() => {
+      console.log("Impossible de récupérer le lien du bot.");
+    });
+</script>
 </html>
