@@ -2,6 +2,9 @@
 <html>
 <head>
   <title>Tableau de bord</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/dashboard.css">
 </head>
 <body>
   <nav>
@@ -13,7 +16,7 @@
 
   <a id="invite-link" href="#">Ajouter le bot à votre serveur</a>
   
-  <h2>Mes serveurs :</h2>
+  <h2>Mes serveurs qui ont le bot :</h2>
   <ul id="guilds-list"></ul> <!-- Ici on va lister les guilds -->
 
   <script>
@@ -39,15 +42,47 @@
         } else {
           guilds.forEach(g => {
             const li = document.createElement("li");
-            li.textContent = g.name;
-            li.style.cursor = "pointer"; // change le curseur pour montrer que c'est cliquable
-            li.style.padding = "5px";
+            li.style.cursor = "pointer";
+            li.style.padding = "8px";
             li.style.border = "1px solid #ccc";
             li.style.margin = "5px 0";
+            li.style.display = "flex";
+            li.style.alignItems = "center";
+            li.style.gap = "10px";
+            li.style.borderRadius = "8px";
+            li.style.backgroundColor = "#161a22"; // fond sombre pour chaque item
+            li.style.transition = "background 0.2s";
+
             li.addEventListener("click", () => {
-              // Action quand on clique : exemple, redirection vers une page de configuration pour ce serveur
               window.location.href = `/guild/${g.id}`;
             });
+
+            li.addEventListener("mouseover", () => {
+              li.style.backgroundColor = "#5865F2"; // couleur Discord au hover
+              li.style.color = "white";
+            });
+
+            li.addEventListener("mouseout", () => {
+              li.style.backgroundColor = "#161a22";
+              li.style.color = "";
+            });
+
+            // Logo de la guild
+            if (g.icon) {
+              const img = document.createElement("img");
+              img.src = `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`;
+              img.alt = `${g.name} logo`;
+              img.style.width = "40px";
+              img.style.height = "40px";
+              img.style.borderRadius = "50%";
+              li.appendChild(img);
+            }
+
+            // Nom de la guild
+            const span = document.createElement("span");
+            span.textContent = g.name;
+            li.appendChild(span);
+
             list.appendChild(li);
           });
         }

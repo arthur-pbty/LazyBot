@@ -1,0 +1,105 @@
+:root {
+  --bg: #0f1115;
+  --bg-card: #161a22;
+  --text: #e6e6eb;
+  --muted: #9aa0b4;
+  --primary: #5865F2; /* couleur Discord */
+  --primary-hover: #4752c4;
+  --border: #23283a;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* BODY */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 20px;
+}
+
+/* NAVBAR */
+nav {
+  display: flex;
+  gap: 20px;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: var(--text);
+}
+
+/* TITRES */
+h1, h2 {
+  text-align: center;
+  margin-top: 30px;
+}
+
+h2 {
+  margin-bottom: 20px;
+  color: var(--muted);
+}
+
+/* AVATAR */
+#avatar {
+  display: block;
+  margin: 20px auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+}
+
+/* BOUTON INVITE */
+#invite-link {
+  display: block;
+  width: fit-content;
+  margin: 20px auto;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+#invite-link:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* LISTE DES GUILDS */
+#guilds-list {
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+  list-style: none;
+}
+
+#guilds-list li {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 10px 15px;
+  margin: 5px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#guilds-list li:hover {
+  background: var(--primary);
+  color: white;
+}
