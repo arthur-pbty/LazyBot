@@ -131,213 +131,145 @@
       <button type="submit">Sauvegarder</button>
       <div id="status-autorole-vocal-form"></div>
     </form>
+
+
+    <form id="level-form">
+      <label>
+        <input type="checkbox" id="level-enabled" />
+        Activer le système de niveaux
+      </label>
+
+      <label>
+        <input type="checkbox" id="level-announcement-enabled" />
+        Annoncer les améliorations de niveau dans un canal
+      </label>
+
+      <label>
+        Canal d'affichage des améliorations de niveau :
+        <br />
+        <select id="level-announcements-channel">
+        </select>
+      </label>
+
+      <label>
+        Message d'amélioration de niveau :
+        <br />
+        <textarea
+          id="level-announcements-message"
+          rows="4"
+          cols="50"
+          placeholder="Ex : Félicitations {user}, tu es maintenant niveau {level} ! 🎉"
+        ></textarea>
+      </label>
+      <small>
+        Variables disponibles :
+        <ul>
+          <li><code>{user}</code> → nom de l'utilisateur</li>
+          <li><code>{mention}</code> → mention de l'utilisateur</li>
+          <li><code>{level}</code> → niveau atteint</li>
+          <li><code>{level-xp}</code> → points d'expérience du niveau</li>
+        </ul>
+      </small>
+
+      <label>
+        Courbe d'expérience des niveaux :
+        <br />
+        <select id="level-xp-curve-type">
+          <option value="constante">Constante</option>
+          <option value="linear">Linéaire</option>
+          <option value="quadratic">Quadratique</option>
+          <option value="exponential">Exponentielle</option>
+        </select>
+      </label>
+
+      <label>
+        Multiplicateur de points d'expérience par niveau :
+        <br />
+        <input type="number" id="level-xp-multiplier" min="1" value="1" />
+      </label>
+
+      <label>
+        Annonce des niveaux tout les X niveaux :
+        <br />
+        <input type="number" id="level-announcement-every" min="1" value="1" />
+      </label>
+
+      <label>
+        Niveau maximum (0 pour infini) :
+        <br />
+        <input type="number" id="level-max-level" min="0" value="0" />
+      </label>
+
+      <label>
+        Rôle avec/sans expérience :
+        <br />
+        <select id="level-role-with-or-without-xp-type">
+          <option value="with">Avec</option>
+          <option value="without">Sans</option>
+        </select>
+        <br />
+        <select id="level-role-with-or-without-xp" multiple size="5">
+        </select>
+      </label>
+
+      <label>
+        Salon avec/sans expérience :
+        <br />
+        <select id="level-channel-with-or-without-xp-type">
+          <option value="with">Avec</option>
+          <option value="without">Sans</option>
+        </select>
+        <br />
+        <select id="level-channel-with-or-without-xp" multiple size="5">
+        </select>
+      </label>
+
+      <label>
+        <input type="checkbox" id="message-xp-enabled" />
+        Gagner de l'expérience en envoyant des messages
+      </label>
+
+      <label>
+        Gain de points d'expérience par message :
+        <br />
+        Entre
+        <input type="number" id="level-xp-per-message-min" min="1" value="15" />
+        et
+        <input type="number" id="level-xp-per-message-max" min="1" value="25" />
+        points d'expérience
+      </label>
+
+      <label>
+        Cooldown entre les messages pour gagner de l'XP (en secondes) :
+        <br />
+        <input type="number" id="level-xp-cooldown" min="0" value="2" />
+      </label>
+
+      <label>
+        <input type="checkbox" id="voice-xp-enabled" />
+        Gagner de l'expérience en étant en vocal
+      </label>
+
+      <label>
+        Gain de points d'expérience par minute en vocal :
+        <br />
+        Entre
+        <input type="number" id="level-xp-per-voice-min" min="1" value="10" />
+        et
+        <input type="number" id="level-xp-per-voice-max" min="1" value="20" />
+        points d'expérience
+      </label>
+
+      <button type="submit">Sauvegarder</button>
+      <div id="status-level-form"></div>
+    </form>
     
 
-    <script>
-      const guildId = window.location.pathname.split("/")[2]; // récupère l'ID du serveur
-
-      // Afficher le nom du serveur
-      fetch("/api/guilds")
-        .then((res) => res.json())
-        .then((guilds) => {
-          const guild = guilds.find((g) => g.id === guildId);
-          if (!guild) {
-            document.getElementById("guild-name").textContent =
-              "Serveur introuvable ou accès refusé";
-            return;
-          }
-          document.getElementById(
-            "guild-name"
-          ).textContent = `Dashboard : ${guild.name}`;
-        });
-      
-
-      fetch(`/api/bot/get-text-channels/${guildId}`)
-        .then(res => res.json())
-        .then(channels => {
-          const selectWelcome = document.getElementById("welcome-channel");
-          const selectGoodbye = document.getElementById("goodbye-channel");
-          channels.forEach(channel => {
-            const option = document.createElement("option");
-            option.value = channel.id;
-            option.textContent = `#${channel.name}`;
-            selectWelcome.appendChild(option);
-            selectGoodbye.appendChild(option.cloneNode(true));
-          });
-        });
-
-      
-
-      const selectExclude = document.getElementById("autorole-vocal-exclude-channel");
-      selectExclude.innerHTML = ""; // reset
-
-      fetch(`/api/bot/get-voice-channels/${guildId}`)
-        .then(res => res.json())
-        .then(channels => {
-          channels.forEach(channel => {
-            const option = document.createElement("option");
-            option.value = channel.id;
-            option.textContent = `#${channel.name}`;
-            selectExclude.appendChild(option);
-          });
-          return fetch(`/api/bot/get-autorole-vocal-config/${guildId}`);
-        })
-        .then(res => res.json())
-        .then(cfg => {
-          document.getElementById("autorole-vocal-enabled").checked = !!cfg.enabled;
-          document.getElementById("autorole-vocal-role").value = cfg.roleId ?? "";
-
-          const excluded = Array.isArray(cfg.excludeChannelIds)
-            ? cfg.excludeChannelIds.map(String) // sécurité
-            : [];
-
-          Array.from(selectExclude.options).forEach(option => {
-            option.selected = excluded.includes(option.value);
-          });
-        })
-        .catch(console.error);
-
-
-
-      fetch(`/api/bot/get-roles/${guildId}`)
-        .then(res => res.json())
-        .then(roles => {
-          const selectAutorole = document.getElementById("autorole-role");
-          const selectAutoroleVocal = document.getElementById("autorole-vocal-role");
-          roles.forEach(role => {
-            const option = document.createElement("option");
-            option.value = role.id;
-            option.textContent = role.name;
-            selectAutorole.appendChild(option);
-            selectAutoroleVocal.appendChild(option.cloneNode(true));
-          });
-        });
-
-
-      const welcomeForm = document.getElementById("welcome-form");
-      welcomeForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const enabled = document.getElementById("welcome-enabled").checked;
-        const channelId = document.getElementById("welcome-channel").value;
-        const message = document.getElementById("welcome-message").value;
-
-        const res = await fetch("/api/bot/save-welcome-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guildId,
-            channelId,
-            welcomeMessage: message,
-            welcomeEnabled: enabled,
-          }),
-        });
-
-        const data = await res.json();
-        document.getElementById("status-welcome-form").textContent = data.success
-          ? "Config de bienvenue sauvegardée ✅"
-          : "Erreur ❌";
-      });
-
-
-      const goodbyeForm = document.getElementById("goodbye-form");
-      goodbyeForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const enabled = document.getElementById("goodbye-enabled").checked;
-        const channelId = document.getElementById("goodbye-channel").value;
-        const message = document.getElementById("goodbye-message").value;
-
-        const res = await fetch("/api/bot/save-goodbye-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guildId,
-            channelId,
-            goodbyeMessage: message,
-            goodbyeEnabled: enabled,
-          }),
-        });
-
-        const data = await res.json();
-        document.getElementById("status-goodbye-form").textContent = data.success
-          ? "Config d'au revoir sauvegardée ✅"
-          : "Erreur ❌";
-      });
-
-
-      const autoroleNewUserForm = document.getElementById("autorole-newuser-form");
-      autoroleNewUserForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const enabled = document.getElementById("autorole-enabled").checked;
-        const roleId = document.getElementById("autorole-role").value;
-
-        const res = await fetch("/api/bot/save-autorole-newuser-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guildId,
-            roleId,
-            enabled,
-          }),
-        });
-
-        const data = await res.json();
-        document.getElementById("status-autorole-form").textContent = data.success
-          ? "Config d'auto-rôle pour nouveaux membres sauvegardée ✅"
-          : "Erreur ❌";
-      });
-
-
-      const autoroleVocalForm = document.getElementById("autorole-vocal-form");
-      autoroleVocalForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const enabled = document.getElementById("autorole-vocal-enabled").checked;
-        const roleId = document.getElementById("autorole-vocal-role").value;
-        const excludeChannelSelect = document.getElementById("autorole-vocal-exclude-channel");
-        const excludeChannelId = Array.from(excludeChannelSelect.selectedOptions).map(option => option.value);
-
-        const res = await fetch("/api/bot/save-autorole-vocal-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guildId,
-            roleId,
-            excludeChannelId,
-            enabled,
-          }),
-        });
-        const data = await res.json();
-        document.getElementById("status-autorole-vocal-form").textContent = data.success
-          ? "Config d'auto-rôle pour membres en vocal sauvegardée ✅"
-          : "Erreur ❌";
-      });
-
-
-      fetch(`/api/bot/get-welcome-config/${guildId}`)
-        .then(res => res.json())
-        .then(cfg => {
-          document.getElementById("welcome-enabled").checked = cfg.enabled;
-          document.getElementById("welcome-channel").value = cfg.channelId;
-          document.getElementById("welcome-message").value = cfg.message;
-        });
-
-
-      fetch(`/api/bot/get-goodbye-config/${guildId}`)
-        .then(res => res.json())
-        .then(cfg => {
-          document.getElementById("goodbye-enabled").checked = cfg.enabled;
-          document.getElementById("goodbye-channel").value = cfg.channelId;
-          document.getElementById("goodbye-message").value = cfg.message;
-        });
-
-
-      fetch(`/api/bot/get-autorole-newuser-config/${guildId}`)
-        .then(res => res.json())
-        .then(cfg => {
-          document.getElementById("autorole-enabled").checked = cfg.enabled;
-          document.getElementById("autorole-role").value = cfg.roleId;
-        });
-
-
-    </script>
+    <script src="/guild/guildBase.js"></script>
+    <script src="/guild/welcomeForm.js"></script>
+    <script src="/guild/goodbyeForm.js"></script>
+    <script src="/guild/autoroleNewUserForm.js"></script>
+    <script src="/guild/autoroleVocalForm.js"></script>
+    <script src="/guild/levelForm.js"></script>
   </body>
 </html>

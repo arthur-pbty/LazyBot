@@ -335,5 +335,215 @@ module.exports = (app, db, client) => {
     res.json(roles);
   });
 
+
+  router.get("/bot/get-level-config/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    db.get(
+      `SELECT 
+        enabled,
+        level_announcements_enabled,
+        level_announcements_channel_id,
+        level_announcements_message,
+        xp_courbe_type,
+        multiplier_courbe_for_level,
+        level_annoncement_every_level,
+        level_max,
+        role_with_without_type,
+        role_with_without_xp,
+        salon_with_without_type,
+        salon_with_without_xp,
+        gain_xp_on_message,
+        gain_xp_message_lower_bound,
+        gain_xp_message_upper_bound,
+        cooldown_xp_message_seconds,
+        gain_xp_on_voice,
+        gain_voice_xp_lower_bound,
+        gain_voice_xp_upper_bound
+      FROM levels_config WHERE guild_id = ?`,
+      [guildId],
+      (err, row) => {
+        if (err || !row) {
+          console.error(err);
+          return res.json({ 
+            enabled: false, 
+            levelAnnouncementsEnabled: false,
+            levelAnnouncementsChannelId: null,
+            levelAnnouncementsMessage: "",
+            xpCourbeType: "exponential",
+            multiplierCourbeForLevel: 1,
+            levelAnnouncementEveryLevel: 1,
+            levelMax: 0,
+            roleWithWithoutType: "with",
+            roleWithWithoutXp: [],
+            salonWithWithoutType: "with",
+            salonWithWithoutXp: [],
+            gainXpOnMessage: false,
+            gainXpMessageLowerBound: 15,
+            gainXpMessageUpperBound: 25,
+            cooldownXpMessageSeconds: 2,
+            gainXpOnVoice: false,
+            gainVoiceXpLowerBound: 10,
+            gainVoiceXpUpperBound: 20
+          });
+        }
+        res.json({
+          enabled: !!row.enabled,
+          levelAnnouncementsEnabled: !!row.level_announcements_enabled,
+          levelAnnouncementsChannelId: row.level_announcements_channel_id,
+          levelAnnouncementsMessage: row.level_announcements_message,
+          xpCourbeType: row.xp_courbe_type,
+          multiplierCourbeForLevel: row.multiplier_courbe_for_level,
+          levelAnnouncementEveryLevel: row.level_annoncement_every_level,
+          levelMax: row.level_max,
+          roleWithWithoutType: row.role_with_without_type,
+          roleWithWithoutXp: JSON.parse(row.role_with_without_xp),
+          salonWithWithoutType: row.salon_with_without_type,
+          salonWithWithoutXp: JSON.parse(row.salon_with_without_xp),
+          gainXpOnMessage: !!row.gain_xp_on_message,
+          gainXpMessageLowerBound: row.gain_xp_message_lower_bound,
+          gainXpMessageUpperBound: row.gain_xp_message_upper_bound,
+          cooldownXpMessageSeconds: row.cooldown_xp_message_seconds,
+          gainXpOnVoice: !!row.gain_xp_on_voice,
+          gainVoiceXpLowerBound: row.gain_voice_xp_lower_bound,
+          gainVoiceXpUpperBound: row.gain_voice_xp_upper_bound
+        });
+      }
+    );
+  });
+
+
+  router.post("/bot/save-level-config", express.json(), (req, res) => {
+    const {
+      guildId,
+      levelEnabled,
+      levelAnnouncementsEnabled,
+      levelAnnouncementsChannelId,
+      levelAnnouncementsMessage,
+      xpCourbeType,
+      multiplierCourbeForLevel,
+      levelAnnouncementEveryLevel,
+      levelMax,
+      roleWithWithoutType,
+      roleWithWithoutXp,
+      salonWithWithoutType,
+      salonWithWithoutXp,
+      gainXpOnMessage,
+      gainXpMessageLowerBound,
+      gainXpMessageUpperBound,
+      cooldownXpMessageSeconds,
+      gainXpOnVoice,
+      gainVoiceXpLowerBound,
+      gainVoiceXpUpperBound
+    } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(401).json({ success: false });
+    }
+    db.run(
+      `
+      INSERT INTO levels_config (
+        guild_id,
+        enabled,
+        level_announcements_enabled,
+        level_announcements_channel_id,
+        level_announcements_message,
+        xp_courbe_type,
+        multiplier_courbe_for_level,
+        level_annoncement_every_level,
+        level_max,
+        role_with_without_type,
+        role_with_without_xp,
+        salon_with_without_type,
+        salon_with_without_xp,
+        gain_xp_on_message,
+        gain_xp_message_lower_bound,
+        gain_xp_message_upper_bound,
+        cooldown_xp_message_seconds,
+        gain_xp_on_voice,
+        gain_voice_xp_lower_bound,
+        gain_voice_xp_upper_bound
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(guild_id)
+      DO UPDATE SET
+        enabled = ?,
+        level_announcements_enabled = ?,
+        level_announcements_channel_id = ?,
+        level_announcements_message = ?,
+        xp_courbe_type = ?,
+        multiplier_courbe_for_level = ?,
+        level_annoncement_every_level = ?,
+        level_max = ?,
+        role_with_without_type = ?,
+        role_with_without_xp = ?,
+        salon_with_without_type = ?,
+        salon_with_without_xp = ?,
+        gain_xp_on_message = ?,
+        gain_xp_message_lower_bound = ?,
+        gain_xp_message_upper_bound = ?,
+        cooldown_xp_message_seconds = ?,
+        gain_xp_on_voice = ?,
+        gain_voice_xp_lower_bound = ?,
+        gain_voice_xp_upper_bound = ?
+      `,
+      [
+        guildId,
+        levelEnabled ? 1 : 0,
+        levelAnnouncementsEnabled ? 1 : 0,
+        levelAnnouncementsChannelId,
+        levelAnnouncementsMessage,
+        xpCourbeType,
+        multiplierCourbeForLevel,
+        levelAnnouncementEveryLevel,
+        levelMax,
+        roleWithWithoutType,
+        JSON.stringify(Array.isArray(roleWithWithoutXp) ? roleWithWithoutXp : [roleWithWithoutXp]),
+        salonWithWithoutType,
+        JSON.stringify(Array.isArray(salonWithWithoutXp) ? salonWithWithoutXp : [salonWithWithoutXp]),
+        gainXpOnMessage ? 1 : 0,
+        gainXpMessageLowerBound,
+        gainXpMessageUpperBound,
+        cooldownXpMessageSeconds,
+        gainXpOnVoice ? 1 : 0,
+        gainVoiceXpLowerBound,
+        gainVoiceXpUpperBound,
+        levelEnabled ? 1 : 0,
+        levelAnnouncementsEnabled ? 1 : 0,
+        levelAnnouncementsChannelId,
+        levelAnnouncementsMessage,
+        xpCourbeType,
+        multiplierCourbeForLevel,
+        levelAnnouncementEveryLevel,
+        levelMax,
+        roleWithWithoutType,
+        JSON.stringify(Array.isArray(roleWithWithoutXp) ? roleWithWithoutXp : [roleWithWithoutXp]),
+        salonWithWithoutType,
+        JSON.stringify(Array.isArray(salonWithWithoutXp) ? salonWithWithoutXp : [salonWithWithoutXp]),
+        gainXpOnMessage ? 1 : 0,
+        gainXpMessageLowerBound,
+        gainXpMessageUpperBound,
+        cooldownXpMessageSeconds,
+        gainXpOnVoice ? 1 : 0,
+        gainVoiceXpLowerBound,
+        gainVoiceXpUpperBound
+      ],
+      err => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+
   app.use("/api", router);
 };
