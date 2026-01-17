@@ -54,6 +54,10 @@
             <span class="nav-item-icon">🔊</span>
             Salons temporaires
           </a>
+          <a class="nav-item" data-section="counting">
+            <span class="nav-item-icon">🔢</span>
+            Comptage
+          </a>
         </div>
       </nav>
       
@@ -655,6 +659,45 @@
           </div>
         </section>
 
+        <!-- Section: Comptage -->
+        <section class="config-section" id="section-counting">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">🔢</span>
+                <h3>Système de comptage</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="counting-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="info-box">
+                <strong>💡 Comment ça marche ?</strong><br>
+                Les membres comptent à l'infini dans le salon dédié. Un membre ne peut pas compter deux fois de suite, 
+                ils doivent alterner. Si quelqu'un se trompe, le compteur repart à 0 !
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Salon de comptage</label>
+                <span class="form-sublabel">Le salon textuel où les membres peuvent compter</span>
+                <select class="form-select" id="counting-channel"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Compteur actuel</label>
+                <input type="number" class="form-input" id="counting-current" disabled value="0">
+                <span class="form-sublabel">Utilisez les commandes /counting-set, /counting-add, /counting-remove pour modifier</span>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-counting-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-counting">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -670,5 +713,6 @@
     <script src="/guild/levelForm.js"></script>
     <script src="/guild/economyForm.js"></script>
     <script src="/guild/privateroomForm.js"></script>
+    <script src="/guild/countingForm.js"></script>
   </body>
 </html>

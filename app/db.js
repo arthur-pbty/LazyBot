@@ -176,6 +176,14 @@ db.exec(`
     owner_id TEXT NOT NULL,
     created_at INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS counting_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    channel_id TEXT,
+    current_count INTEGER NOT NULL DEFAULT 0,
+    last_user_id TEXT
+  );
 `);
 
 module.exports = db;

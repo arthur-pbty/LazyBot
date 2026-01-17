@@ -193,5 +193,70 @@ module.exports = {
         );
       }
     );
+
+    // ===== COUNTING SYSTEM =====
+    handleCounting(message, guildId);
   },
 };
+
+// ===== COUNTING HANDLER =====
+async function handleCounting(message, guildId) {
+  try {
+    const config = await db.getAsync(
+      "SELECT enabled, channel_id, current_count, last_user_id FROM counting_config WHERE guild_id = ?",
+      [guildId]
+    );
+
+    if (!config || !config.enabled || config.channel_id !== message.channel.id) return;
+
+    const content = message.content.trim();
+    const number = parseInt(content, 10);
+
+    // Supprimer les messages qui ne sont pas des nombres valides
+    if (isNaN(number) || content !== number.toString()) {
+      await message.delete().catch(() => {});
+      return;
+    }
+
+    const expectedNumber = config.current_count + 1;
+
+    // Vérifier que l'utilisateur n'est pas le même que le précédent
+    if (config.last_user_id === message.author.id) {
+      await message.delete().catch(() => {});
+      const errorMsg = await message.channel.send({
+        content: `❌ **${message.author.username}**, tu ne peux pas compter deux fois de suite ! Le prochain nombre est toujours **${expectedNumber}**.`
+      });
+      setTimeout(() => errorMsg.delete().catch(() => {}), 5000);
+      return;
+    }
+
+    // Vérifier que le nombre est correct
+    if (number !== expectedNumber) {
+      await message.delete().catch(() => {});
+      const errorMsg = await message.channel.send({
+        content: `❌ **${message.author.username}**, mauvais nombre ! Le prochain nombre est **${expectedNumber}**.`
+      });
+      setTimeout(() => errorMsg.delete().catch(() => {}), 5000);
+      return;
+    }
+
+    // Nombre correct !
+    await message.react("✅");
+    
+    // Mettre à jour le compteur
+    db.run(
+      "UPDATE counting_config SET current_count = ?, last_user_id = ? WHERE guild_id = ?",
+      [number, message.author.id, guildId]
+    );
+
+    // Milestones pour les nombres ronds
+    if (number % 100 === 0) {
+      await message.reply({
+        content: `🎉 **${number}** atteint ! Bien joué à tous !`,
+        allowedMentions: { repliedUser: false }
+      });
+    }
+  } catch (err) {
+    console.error("Erreur counting:", err);
+  }
+}

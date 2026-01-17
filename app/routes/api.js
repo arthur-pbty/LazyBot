@@ -829,5 +829,66 @@ module.exports = (app, db, client) => {
     res.json(categories);
   });
 
+  // ===== COUNTING CONFIG =====
+  router.post("/bot/save-counting-config", express.json(), (req, res) => {
+    const { guildId, enabled, channelId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
+
+    db.run(
+      `INSERT INTO counting_config (guild_id, enabled, channel_id, current_count, last_user_id)
+       VALUES (?, ?, ?, 0, NULL)
+       ON CONFLICT(guild_id) DO UPDATE SET
+         enabled = ?, channel_id = ?`,
+      [
+        guildId,
+        enabled ? 1 : 0,
+        channelId,
+        enabled ? 1 : 0,
+        channelId
+      ],
+      err => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+
+  router.get("/bot/get-counting-config/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    db.get(
+      "SELECT enabled, channel_id, current_count FROM counting_config WHERE guild_id = ?",
+      [guildId],
+      (err, row) => {
+        if (err || !row) {
+          return res.json({
+            enabled: false,
+            channelId: null,
+            currentCount: 0
+          });
+        }
+        res.json({
+          enabled: !!row.enabled,
+          channelId: row.channel_id,
+          currentCount: row.current_count || 0
+        });
+      }
+    );
+  });
+
   app.use("/api", router);
 };
