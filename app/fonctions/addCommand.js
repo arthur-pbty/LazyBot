@@ -43,8 +43,8 @@ function addCommand({
   // Permissions
   let defaultMemberPermissions = null;
   if (permissions.length > 0) {
-    defaultMemberPermissions = new PermissionsBitField();
-    permissions.forEach(p => defaultMemberPermissions.add(p));
+    // Résoudre en bitfield (BigInt) compatible avec setDefaultMemberPermissions
+    defaultMemberPermissions = PermissionsBitField.resolve(permissions);
   }
 
   // Création du SlashCommandBuilder
@@ -58,14 +58,22 @@ function addCommand({
   slashOptions.forEach(opt => {
     switch (opt.type) {
       case "STRING":
-        slashData.addStringOption(o =>
-          o.setName(opt.name).setDescription(opt.description || "No description").setRequired(!!opt.required)
-        );
+        slashData.addStringOption(o => {
+          o.setName(opt.name).setDescription(opt.description || "No description").setRequired(!!opt.required);
+          if (opt.choices && Array.isArray(opt.choices)) {
+            o.addChoices(...opt.choices);
+          }
+          return o;
+        });
         break;
       case "INTEGER":
-        slashData.addIntegerOption(o =>
-          o.setName(opt.name).setDescription(opt.description || "No description").setRequired(!!opt.required)
-        );
+        slashData.addIntegerOption(o => {
+          o.setName(opt.name).setDescription(opt.description || "No description").setRequired(!!opt.required);
+          if (opt.choices && Array.isArray(opt.choices)) {
+            o.addChoices(...opt.choices);
+          }
+          return o;
+        });
         break;
       case "BOOLEAN":
         slashData.addBooleanOption(o =>

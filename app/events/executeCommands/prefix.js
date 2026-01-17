@@ -24,6 +24,28 @@ module.exports = {
       );
     if (!command) return;
 
+    // Vérification du scope / guildCondition
+    if (command.scope === "guild") {
+      const guildId = message.guild ? message.guild.id : null;
+      if (!guildId)
+        return message
+          .reply({ content: "Cette commande ne peut pas être utilisée en message privé." })
+          .then((msg) => setTimeout(() => msg.delete(), 5000));
+      if (typeof command.guildCondition === "function") {
+        let allowed = false;
+        try {
+          allowed = await command.guildCondition(guildId);
+        } catch (err) {
+          console.error(`Erreur guildCondition pour la guild ${guildId}`, err);
+          allowed = false;
+        }
+        if (!allowed)
+          return message
+            .reply({ content: "Cette commande est désactivée sur ce serveur." })
+            .then((msg) => setTimeout(() => msg.delete(), 5000));
+      }
+    }
+
     if (command.dm !== true && message.channel.type === 1)
       return message
         .reply({

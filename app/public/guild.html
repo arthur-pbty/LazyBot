@@ -263,6 +263,103 @@
       <button type="submit">Sauvegarder</button>
       <div id="status-level-form"></div>
     </form>
+
+
+    <form id="economy-form">
+      <h2>💰 Système d'économie</h2>
+      
+      <label>
+        <input type="checkbox" id="economy-enabled" />
+        Activer le système d'économie
+      </label>
+
+      <label>
+        Nom de la monnaie :
+        <br />
+        <input type="text" id="economy-currency-name" value="coins" />
+      </label>
+
+      <label>
+        Symbole de la monnaie :
+        <br />
+        <input type="text" id="economy-currency-symbol" value="💰" maxlength="10" />
+      </label>
+
+      <label>
+        Solde de départ :
+        <br />
+        <input type="number" id="economy-starting-balance" min="0" value="0" />
+      </label>
+
+      <h3>📅 Récompense quotidienne</h3>
+      <label>
+        Montant quotidien :
+        <br />
+        <input type="number" id="economy-daily-amount" min="1" value="100" />
+      </label>
+
+      <label>
+        Cooldown (heures) :
+        <br />
+        <input type="number" id="economy-daily-cooldown" min="1" value="24" />
+      </label>
+
+      <h3>💼 Travail</h3>
+      <label>
+        Gain minimum :
+        <br />
+        <input type="number" id="economy-work-min" min="1" value="50" />
+      </label>
+
+      <label>
+        Gain maximum :
+        <br />
+        <input type="number" id="economy-work-max" min="1" value="150" />
+      </label>
+
+      <label>
+        Cooldown (minutes) :
+        <br />
+        <input type="number" id="economy-work-cooldown" min="1" value="60" />
+      </label>
+
+      <h3>🔫 Crime</h3>
+      <label>
+        Gain minimum :
+        <br />
+        <input type="number" id="economy-crime-min" min="1" value="100" />
+      </label>
+
+      <label>
+        Gain maximum :
+        <br />
+        <input type="number" id="economy-crime-max" min="1" value="500" />
+      </label>
+
+      <label>
+        Taux de réussite (%) :
+        <br />
+        <input type="number" id="economy-crime-success" min="1" max="100" value="50" />
+      </label>
+
+      <label>
+        Amende en cas d'échec (% du solde) :
+        <br />
+        <input type="number" id="economy-crime-fine" min="0" max="100" value="30" />
+      </label>
+
+      <label>
+        Cooldown (minutes) :
+        <br />
+        <input type="number" id="economy-crime-cooldown" min="1" value="120" />
+      </label>
+
+      <button type="submit">Sauvegarder</button>
+      <div id="status-economy-form"></div>
+    </form>
+
+
+    
     
 
     <script src="/guild/guildBase.js"></script>
@@ -271,5 +368,6 @@
     <script src="/guild/autoroleNewUserForm.js"></script>
     <script src="/guild/autoroleVocalForm.js"></script>
     <script src="/guild/levelForm.js"></script>
+    <script src="/guild/economyForm.js"></script>
   </body>
 </html>

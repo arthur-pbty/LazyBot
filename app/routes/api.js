@@ -548,5 +548,122 @@ module.exports = (app, db, client) => {
     );
   });
 
+
+  // ============== ECONOMY CONFIG ==============
+
+  router.get("/bot/get-economy-config/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    db.get(
+      `SELECT * FROM economy_config WHERE guild_id = ?`,
+      [guildId],
+      (err, row) => {
+        if (err || !row) {
+          return res.json({
+            enabled: false,
+            currencyName: "coins",
+            currencySymbol: "💰",
+            dailyAmount: 100,
+            dailyCooldownHours: 24,
+            workMinAmount: 50,
+            workMaxAmount: 150,
+            workCooldownMinutes: 60,
+            crimeMinAmount: 100,
+            crimeMaxAmount: 500,
+            crimeSuccessRate: 50,
+            crimeFinePercent: 30,
+            crimeCooldownMinutes: 120,
+            startingBalance: 0
+          });
+        }
+        res.json({
+          enabled: !!row.enabled,
+          currencyName: row.currency_name,
+          currencySymbol: row.currency_symbol,
+          dailyAmount: row.daily_amount,
+          dailyCooldownHours: row.daily_cooldown_hours,
+          workMinAmount: row.work_min_amount,
+          workMaxAmount: row.work_max_amount,
+          workCooldownMinutes: row.work_cooldown_minutes,
+          crimeMinAmount: row.crime_min_amount,
+          crimeMaxAmount: row.crime_max_amount,
+          crimeSuccessRate: row.crime_success_rate,
+          crimeFinePercent: row.crime_fine_percent,
+          crimeCooldownMinutes: row.crime_cooldown_minutes,
+          startingBalance: row.starting_balance
+        });
+      }
+    );
+  });
+
+  router.post("/bot/save-economy-config", express.json(), (req, res) => {
+    const {
+      guildId,
+      economyEnabled,
+      currencyName,
+      currencySymbol,
+      dailyAmount,
+      dailyCooldownHours,
+      workMinAmount,
+      workMaxAmount,
+      workCooldownMinutes,
+      crimeMinAmount,
+      crimeMaxAmount,
+      crimeSuccessRate,
+      crimeFinePercent,
+      crimeCooldownMinutes,
+      startingBalance
+    } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
+
+    db.run(
+      `INSERT INTO economy_config (
+        guild_id, enabled, currency_name, currency_symbol,
+        daily_amount, daily_cooldown_hours,
+        work_min_amount, work_max_amount, work_cooldown_minutes,
+        crime_min_amount, crime_max_amount, crime_success_rate, crime_fine_percent, crime_cooldown_minutes,
+        starting_balance
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(guild_id) DO UPDATE SET
+        enabled = ?, currency_name = ?, currency_symbol = ?,
+        daily_amount = ?, daily_cooldown_hours = ?,
+        work_min_amount = ?, work_max_amount = ?, work_cooldown_minutes = ?,
+        crime_min_amount = ?, crime_max_amount = ?, crime_success_rate = ?, crime_fine_percent = ?, crime_cooldown_minutes = ?,
+        starting_balance = ?`,
+      [
+        guildId,
+        economyEnabled ? 1 : 0, currencyName, currencySymbol,
+        dailyAmount, dailyCooldownHours,
+        workMinAmount, workMaxAmount, workCooldownMinutes,
+        crimeMinAmount, crimeMaxAmount, crimeSuccessRate, crimeFinePercent, crimeCooldownMinutes,
+        startingBalance,
+        economyEnabled ? 1 : 0, currencyName, currencySymbol,
+        dailyAmount, dailyCooldownHours,
+        workMinAmount, workMaxAmount, workCooldownMinutes,
+        crimeMinAmount, crimeMaxAmount, crimeSuccessRate, crimeFinePercent, crimeCooldownMinutes,
+        startingBalance
+      ],
+      err => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        loadSlashCommands(client, guildId);
+        res.json({ success: true });
+      }
+    );
+  });
+
   app.use("/api", router);
 };

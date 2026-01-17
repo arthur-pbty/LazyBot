@@ -93,6 +93,56 @@ db.exec(`
     prefix TEXT NOT NULL DEFAULT '!',
     PRIMARY KEY (guildId)
   );
+
+  CREATE TABLE IF NOT EXISTS economy_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    currency_name TEXT NOT NULL DEFAULT 'coins',
+    currency_symbol TEXT NOT NULL DEFAULT '💰',
+    daily_amount INTEGER NOT NULL DEFAULT 100,
+    daily_cooldown_hours INTEGER NOT NULL DEFAULT 24,
+    work_min_amount INTEGER NOT NULL DEFAULT 50,
+    work_max_amount INTEGER NOT NULL DEFAULT 150,
+    work_cooldown_minutes INTEGER NOT NULL DEFAULT 60,
+    crime_min_amount INTEGER NOT NULL DEFAULT 100,
+    crime_max_amount INTEGER NOT NULL DEFAULT 500,
+    crime_success_rate INTEGER NOT NULL DEFAULT 50,
+    crime_fine_percent INTEGER NOT NULL DEFAULT 30,
+    crime_cooldown_minutes INTEGER NOT NULL DEFAULT 120,
+    starting_balance INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS user_economy (
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    balance INTEGER NOT NULL DEFAULT 0,
+    bank INTEGER NOT NULL DEFAULT 0,
+    last_daily_timestamp INTEGER,
+    last_work_timestamp INTEGER,
+    last_crime_timestamp INTEGER,
+    PRIMARY KEY (guild_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS shop_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    price INTEGER NOT NULL,
+    role_id TEXT,
+    stock INTEGER DEFAULT -1,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    item_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    purchased_at INTEGER NOT NULL,
+    FOREIGN KEY (item_id) REFERENCES shop_items(id)
+  );
 `);
 
 module.exports = db;

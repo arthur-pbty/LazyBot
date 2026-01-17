@@ -1,4 +1,3 @@
-
 module.exports = {
   name: "interactionCreate",
   async execute(client, interaction) {
@@ -6,6 +5,24 @@ module.exports = {
 
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
+
+    // Vérification du scope / guildCondition
+    if (command.scope === "guild") {
+      const guildId = interaction.guild ? interaction.guild.id : null;
+      if (!guildId)
+        return interaction.reply({ content: "Cette commande ne peut pas être utilisée en message privé.", ephemeral: true });
+      if (typeof command.guildCondition === "function") {
+        let allowed = false;
+        try {
+          allowed = await command.guildCondition(guildId);
+        } catch (err) {
+          console.error(`Erreur guildCondition pour la guild ${guildId}`, err);
+          allowed = false;
+        }
+        if (!allowed)
+          return interaction.reply({ content: "Cette commande est désactivée sur ce serveur.", ephemeral: true });
+      }
+    }
 
     if (command.dm !== true && interaction.channel.type === 1)
       return interaction.reply({
