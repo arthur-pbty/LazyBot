@@ -1,4 +1,3 @@
-const economyForm = document.getElementById("economy-form");
 const economyEnabled = document.getElementById("economy-enabled");
 const currencyName = document.getElementById("economy-currency-name");
 const currencySymbol = document.getElementById("economy-currency-symbol");
@@ -42,7 +41,7 @@ const voiceMoneyMin = document.getElementById("economy-voice-money-min");
 const voiceMoneyMax = document.getElementById("economy-voice-money-max");
 const voiceMoneyInterval = document.getElementById("economy-voice-money-interval");
 
-const statusEconomyForm = document.getElementById("status-economy-form");
+const saveEconomy = document.getElementById("save-economy");
 
 // Charger la config existante
 fetch(`/api/bot/get-economy-config/${guildId}`)
@@ -94,60 +93,71 @@ fetch(`/api/bot/get-economy-config/${guildId}`)
   .catch(console.error);
 
 // Sauvegarder la config
-economyForm.addEventListener("submit", async e => {
-  e.preventDefault();
+saveEconomy.addEventListener("click", async () => {
+  saveEconomy.disabled = true;
+  saveEconomy.textContent = "Sauvegarde...";
 
-  const res = await fetch("/api/bot/save-economy-config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      guildId,
-      economyEnabled: economyEnabled.checked,
-      currencyName: currencyName.value,
-      currencySymbol: currencySymbol.value,
-      startingBalance: parseInt(startingBalance.value, 10),
+  try {
+    const res = await fetch("/api/bot/save-economy-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guildId,
+        economyEnabled: economyEnabled.checked,
+        currencyName: currencyName.value,
+        currencySymbol: currencySymbol.value,
+        startingBalance: parseInt(startingBalance.value, 10),
 
-      // Daily
-      dailyEnabled: dailyEnabled.checked,
-      dailyAmount: parseInt(dailyAmount.value, 10),
-      dailyCooldownHours: parseInt(dailyCooldown.value, 10),
+        // Daily
+        dailyEnabled: dailyEnabled.checked,
+        dailyAmount: parseInt(dailyAmount.value, 10),
+        dailyCooldownHours: parseInt(dailyCooldown.value, 10),
 
-      // Work
-      workEnabled: workEnabled.checked,
-      workMinAmount: parseInt(workMin.value, 10),
-      workMaxAmount: parseInt(workMax.value, 10),
-      workCooldownMinutes: parseInt(workCooldown.value, 10),
+        // Work
+        workEnabled: workEnabled.checked,
+        workMinAmount: parseInt(workMin.value, 10),
+        workMaxAmount: parseInt(workMax.value, 10),
+        workCooldownMinutes: parseInt(workCooldown.value, 10),
 
-      // Crime
-      crimeEnabled: crimeEnabled.checked,
-      crimeMinAmount: parseInt(crimeMin.value, 10),
-      crimeMaxAmount: parseInt(crimeMax.value, 10),
-      crimeSuccessRate: parseInt(crimeSuccess.value, 10),
-      crimeFinePercent: parseInt(crimeFine.value, 10),
-      crimeCooldownMinutes: parseInt(crimeCooldown.value, 10),
+        // Crime
+        crimeEnabled: crimeEnabled.checked,
+        crimeMinAmount: parseInt(crimeMin.value, 10),
+        crimeMaxAmount: parseInt(crimeMax.value, 10),
+        crimeSuccessRate: parseInt(crimeSuccess.value, 10),
+        crimeFinePercent: parseInt(crimeFine.value, 10),
+        crimeCooldownMinutes: parseInt(crimeCooldown.value, 10),
 
-      // Steal
-      stealEnabled: stealEnabled.checked,
-      stealSuccessRate: parseInt(stealSuccess.value, 10),
-      stealMaxPercent: parseInt(stealMaxPercent.value, 10),
-      stealFinePercent: parseInt(stealFine.value, 10),
-      stealCooldownMinutes: parseInt(stealCooldown.value, 10),
+        // Steal
+        stealEnabled: stealEnabled.checked,
+        stealSuccessRate: parseInt(stealSuccess.value, 10),
+        stealMaxPercent: parseInt(stealMaxPercent.value, 10),
+        stealFinePercent: parseInt(stealFine.value, 10),
+        stealCooldownMinutes: parseInt(stealCooldown.value, 10),
 
-      // Message Money
-      messageMoneyEnabled: messageMoneyEnabled.checked,
-      messageMoneyMin: parseInt(messageMoneyMin.value, 10),
-      messageMoneyMax: parseInt(messageMoneyMax.value, 10),
-      messageMoneyCooldownSeconds: parseInt(messageMoneyCooldown.value, 10),
+        // Message Money
+        messageMoneyEnabled: messageMoneyEnabled.checked,
+        messageMoneyMin: parseInt(messageMoneyMin.value, 10),
+        messageMoneyMax: parseInt(messageMoneyMax.value, 10),
+        messageMoneyCooldownSeconds: parseInt(messageMoneyCooldown.value, 10),
 
-      // Voice Money
-      voiceMoneyEnabled: voiceMoneyEnabled.checked,
-      voiceMoneyMin: parseInt(voiceMoneyMin.value, 10),
-      voiceMoneyMax: parseInt(voiceMoneyMax.value, 10),
-      voiceMoneyIntervalMinutes: parseInt(voiceMoneyInterval.value, 10)
-    })
-  });
+        // Voice Money
+        voiceMoneyEnabled: voiceMoneyEnabled.checked,
+        voiceMoneyMin: parseInt(voiceMoneyMin.value, 10),
+        voiceMoneyMax: parseInt(voiceMoneyMax.value, 10),
+        voiceMoneyIntervalMinutes: parseInt(voiceMoneyInterval.value, 10)
+      })
+    });
 
-  statusEconomyForm.textContent = (await res.json()).success
-    ? "Config économie sauvegardée ✅"
-    : "Erreur ❌";
+    const data = await res.json();
+    if (data.success) {
+      showStatus("status-economy-form", "Configuration sauvegardée ✅", "success");
+    } else {
+      showStatus("status-economy-form", "Erreur lors de la sauvegarde ❌", "error");
+    }
+  } catch (error) {
+    showStatus("status-economy-form", "Erreur de connexion ❌", "error");
+  }
+
+  saveEconomy.disabled = false;
+  saveEconomy.textContent = "Sauvegarder";
 });

@@ -1,43 +1,50 @@
-const autoroleVocalForm = document.getElementById("autorole-vocal-form");
 const autoroleVocalEnabled = document.getElementById("autorole-vocal-enabled");
 const autoroleVocalRole = document.getElementById("autorole-vocal-role");
 const excludeSelect = document.getElementById("autorole-vocal-exclude-channel");
-const statusAutoroleVocalForm = document.getElementById("status-autorole-vocal-form");
+const saveAutoroleVocal = document.getElementById("save-autorole-vocal");
 
-fetch(`/api/bot/get-voice-channels/${guildId}`)
-  .then(res => res.json())
-  .then(channels => {
-    channels.forEach(c => {
-      excludeSelect.appendChild(new Option(`#${c.name}`, c.id));
+// Charger la config après que les channels soient chargés
+setTimeout(() => {
+  fetch(`/api/bot/get-autorole-vocal-config/${guildId}`)
+    .then(res => res.json())
+    .then(cfg => {
+      autoroleVocalEnabled.checked = cfg.enabled;
+      autoroleVocalRole.value = cfg.roleId;
+      Array.from(excludeSelect.options).forEach(opt => {
+        opt.selected = cfg.excludeChannelIds?.includes(opt.value);
+      });
     });
-    return fetch(`/api/bot/get-autorole-vocal-config/${guildId}`);
-  })
-  .then(res => res.json())
-  .then(cfg => {
-    autoroleVocalEnabled.checked = cfg.enabled;
-    autoroleVocalRole.value = cfg.roleId;
-    Array.from(excludeSelect.options).forEach(opt => {
-      opt.selected = cfg.excludeChannelIds?.includes(opt.value);
+}, 500);
+
+// Sauvegarder
+saveAutoroleVocal.addEventListener("click", async () => {
+  saveAutoroleVocal.disabled = true;
+  saveAutoroleVocal.textContent = "Sauvegarde...";
+
+  try {
+    const exclude = Array.from(excludeSelect.selectedOptions).map(o => o.value);
+
+    const res = await fetch("/api/bot/save-autorole-vocal-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guildId,
+        enabled: autoroleVocalEnabled.checked,
+        roleId: autoroleVocalRole.value,
+        excludeChannelId: exclude
+      })
     });
-  });
 
-autoroleVocalForm.addEventListener("submit", async e => {
-  e.preventDefault();
+    const data = await res.json();
+    if (data.success) {
+      showStatus("status-autorole-vocal-form", "Configuration sauvegardée ✅", "success");
+    } else {
+      showStatus("status-autorole-vocal-form", "Erreur lors de la sauvegarde ❌", "error");
+    }
+  } catch (error) {
+    showStatus("status-autorole-vocal-form", "Erreur de connexion ❌", "error");
+  }
 
-  const exclude = Array.from(excludeSelect.selectedOptions).map(o => o.value);
-
-  const res = await fetch("/api/bot/save-autorole-vocal-config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      guildId,
-      enabled: autoroleVocalEnabled.checked,
-      roleId: autoroleVocalRole.value,
-      excludeChannelId: exclude
-    })
-  });
-
-  statusAutoroleVocalForm.textContent = (await res.json()).success
-    ? "Auto-rôle vocal sauvegardé ✅"
-    : "Erreur ❌";
+  saveAutoroleVocal.disabled = false;
+  saveAutoroleVocal.textContent = "Sauvegarder";
 });

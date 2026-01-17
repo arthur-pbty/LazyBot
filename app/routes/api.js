@@ -4,6 +4,26 @@ const loadSlashCommands = require("../slash_commands");
 
 module.exports = (app, db, client) => {
 
+  // --- Bot info ---
+  router.get("/bot-info", (req, res) => {
+    const bot = client.user;
+    if (!bot) return res.status(500).json({ error: "Bot non connecté" });
+    
+    let userCount = 0;
+    client.guilds.cache.forEach(g => {
+      userCount += g.memberCount;
+    });
+
+    res.json({
+      id: bot.id,
+      username: bot.username,
+      discriminator: bot.discriminator,
+      avatar: bot.avatar,
+      guildCount: client.guilds.cache.size,
+      userCount: userCount
+    });
+  });
+
   // --- User info ---
   router.get("/user", (req, res) => {
     if (req.session.user) res.json(req.session.user);

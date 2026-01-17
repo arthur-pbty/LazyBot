@@ -1,4 +1,4 @@
-const { Events } = require("discord.js");
+const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db");
 
 module.exports = {
@@ -10,7 +10,7 @@ module.exports = {
       (err, row) => {
         if (err || !row || !row.enabled) return;
 
-        let msg = row.message;
+        let msg = row.message || "Bienvenue {mention} sur {server} !";
 
         msg = msg
           .replace("{user}", member.user.username)
@@ -19,7 +19,15 @@ module.exports = {
 
         const channel = member.guild.channels.cache.get(row.channel_id);
         if (channel) {
-          channel.send(msg);
+          const embed = new EmbedBuilder()
+            .setColor(0x57F287)
+            .setTitle("👋 Bienvenue !")
+            .setDescription(msg)
+            .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+            .setFooter({ text: member.guild.name, iconURL: member.guild.iconURL({ dynamic: true }) })
+            .setTimestamp();
+
+          channel.send({ embeds: [embed] });
         }
       }
     );

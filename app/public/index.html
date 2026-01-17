@@ -1,62 +1,186 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>LazyBot - Bot Discord</title>
+  <title>LazyBot - Bot Discord Multifonction</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LazyBot est un bot Discord puissant avec système de niveaux, économie, messages personnalisés et bien plus encore.">
   <link rel="stylesheet" href="/index.css">
 </head>
 <body>
-  <nav>
-    <a href="/">Accueil</a>
-    <a href="/dashboard">Tableau de bord</a>
-    <div id="profil">
-      <img id="avatar" src="" alt="Avatar">
-      <span id="username"></span>
-      <a id="logout" href="/auth/logout">Se déconnecter</a>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">
+        <img id="bot-avatar" src="" alt="LazyBot">
+        <span>LazyBot</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="/" class="navbar-link">Accueil</a>
+        <a href="/dashboard" class="navbar-link">Dashboard</a>
+        <div id="auth-section">
+          <a href="/auth/login" class="btn btn-primary btn-sm">Connexion</a>
+        </div>
+      </div>
     </div>
   </nav>
-  <h1>LazyBot</h1>
-  <a id="invite-link" href="#">Ajouter à Discord</a>
-  <br><br>
-  <h2>Ajout du bot</h2>
-  <ul>
-    <li>Ajoutez le bot à votre serveur Discord en cliquant sur le lien ci-dessus.</li>
-    <li>Utilisez le tableau de bord pour configurer les paramètres du bot sur vos serveurs.</li>
-    <li>Profitez des fonctionnalités offertes par LazyBot pour améliorer votre expérience Discord !</li>
-  </ul>
 
-  <h2>Fonctionnalités</h2>
-  <ul>
-    <li>Messages de bienvenue et d'au revoir personnalisables</li>
-    <li>Rôles automatiques pour les nouveaux membres et les utilisateurs en vocal</li>
-    <li>Et bien plus encore...</li>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <img id="hero-logo" class="hero-logo" src="" alt="LazyBot Logo">
+      <h1 class="hero-title">LazyBot</h1>
+      <p class="hero-subtitle">
+        Un bot Discord complet avec système de niveaux, économie, messages de bienvenue personnalisés, 
+        rôles automatiques et un dashboard intuitif pour gérer votre serveur.
+      </p>
+      <div class="hero-buttons">
+        <a id="invite-link" href="#" class="btn btn-primary btn-lg">
+          ➕ Ajouter à Discord
+        </a>
+        <a href="/dashboard" class="btn btn-secondary btn-lg">
+          ⚙️ Dashboard
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="section-header">
+      <h2>Fonctionnalités</h2>
+      <p>Tout ce dont vous avez besoin pour votre serveur Discord</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Système de Niveaux</h3>
+        <p>Récompensez l'activité de vos membres avec un système d'XP complet. Messages, vocal, courbes personnalisables et annonces automatiques.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Économie</h3>
+        <p>Un système économique complet avec monnaie personnalisable, commandes daily, work, crime, steal, et transactions entre membres.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👋</div>
+        <h3>Messages Personnalisés</h3>
+        <p>Accueillez les nouveaux membres et dites au revoir avec des messages entièrement personnalisables avec variables.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎭</div>
+        <h3>Rôles Automatiques</h3>
+        <p>Attribuez automatiquement des rôles aux nouveaux membres ou aux utilisateurs en vocal. Configurez les salons à exclure.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <h3>Dashboard Intuitif</h3>
+        <p>Configurez tout depuis un dashboard web moderne et facile à utiliser. Pas besoin de commandes compliquées.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Commandes Admin</h3>
+        <p>Gérez les niveaux et l'économie de vos membres avec des commandes d'administration dédiées.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="section-header">
+      <h2>Statistiques</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span id="stat-servers" class="stat-number">-</span>
+        <span class="stat-label">Serveurs</span>
+      </div>
+      <div class="stat-item">
+        <span id="stat-users" class="stat-number">-</span>
+        <span class="stat-label">Utilisateurs</span>
+      </div>
+      <div class="stat-item">
+        <span id="stat-commands" class="stat-number">20+</span>
+        <span class="stat-label">Commandes</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <h2>Prêt à améliorer votre serveur ?</h2>
+    <p>Ajoutez LazyBot dès maintenant et découvrez toutes ses fonctionnalités.</p>
+    <a id="invite-link-2" href="#" class="btn btn-primary btn-lg">
+      Ajouter à Discord
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="https://discord.com" target="_blank">Support</a>
+      </div>
+      <p class="footer-copyright">
+        © 2024 LazyBot. Fait avec ❤️ pour Discord.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Charger le lien d'invitation
+    fetch("/invite-bot")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("invite-link").href = data.url;
+        document.getElementById("invite-link-2").href = data.url;
+      })
+      .catch(() => console.log("Impossible de récupérer le lien du bot."));
+
+    // Charger les infos du bot (avatar)
+    fetch("/api/bot-info")
+      .then(res => res.json())
+      .then(bot => {
+        const avatarUrl = `https://cdn.discordapp.com/avatars/${bot.id}/${bot.avatar}.png`;
+        document.getElementById("bot-avatar").src = avatarUrl;
+        document.getElementById("hero-logo").src = avatarUrl;
+        
+        // Stats
+        if (bot.guildCount) {
+          document.getElementById("stat-servers").textContent = bot.guildCount;
+        }
+        if (bot.userCount) {
+          document.getElementById("stat-users").textContent = bot.userCount;
+        }
+      })
+      .catch(() => {
+        // Utiliser un placeholder si pas d'info bot
+        document.getElementById("bot-avatar").src = "https://cdn.discordapp.com/embed/avatars/0.png";
+        document.getElementById("hero-logo").src = "https://cdn.discordapp.com/embed/avatars/0.png";
+      });
+
+    // Vérifier si l'utilisateur est connecté
+    fetch("/api/user")
+      .then(res => {
+        if (!res.ok) throw new Error("Non connecté");
+        return res.json();
+      })
+      .then(user => {
+        const authSection = document.getElementById("auth-section");
+        authSection.innerHTML = `
+          <div class="navbar-actions">
+            <div class="navbar-user">
+              <img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" alt="Avatar">
+              <span>${user.username}</span>
+            </div>
+            <a href="/auth/logout" class="btn btn-secondary btn-sm">Déconnexion</a>
+          </div>
+        `;
+      })
+      .catch(() => {
+        // Garder le bouton de connexion par défaut
+      });
+  </script>
 </body>
-<script>
-  fetch("/invite-bot")
-    .then(res => res.json())
-    .then(data => {
-      const link = document.getElementById("invite-link");
-      link.href = data.url; // met le lien dynamique
-    })
-    .catch(() => {
-      console.log("Impossible de récupérer le lien du bot.");
-    });
-
-
-  fetch("/api/user")
-    .then(res => {
-      if (!res.ok) throw new Error("Utilisateur non connecté"); // gère les erreurs HTTP
-      return res.json();
-    })
-    .then(user => {
-      document.getElementById("username").textContent = `${user.username}`;
-      document.getElementById("avatar").src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-    })
-    .catch(() => {
-      const profilDiv = document.getElementById("profil");
-      profilDiv.style.display = "none";
-    });
-
-</script>
 </html>

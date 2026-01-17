@@ -1,108 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>Tableau de bord</title>
+  <title>Dashboard - LazyBot</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/dashboard.css">
 </head>
 <body>
-  <nav>
-    <a href="/">Accueil</a>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">
+        <img id="bot-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="LazyBot">
+        <span>LazyBot</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="/" class="navbar-link">Accueil</a>
+        <a href="/dashboard" class="navbar-link">Dashboard</a>
+        <div class="navbar-actions">
+          <div class="navbar-user">
+            <img id="nav-avatar" src="" alt="Avatar">
+            <span id="nav-username"></span>
+          </div>
+          <a href="/auth/logout" class="btn btn-secondary btn-sm">Déconnexion</a>
+        </div>
+      </div>
+    </div>
   </nav>
 
-  <h1 id="greeting">Chargement...</h1>
-  <img id="avatar" src="" alt="Avatar">
+  <!-- Dashboard Content -->
+  <div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="user-info">
+        <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+        <div class="user-details">
+          <h1 id="greeting">Chargement...</h1>
+          <p>Sélectionnez un serveur pour le configurer</p>
+        </div>
+      </div>
+      <a id="invite-link" href="#" class="btn btn-primary">
+        ➕ Ajouter le bot à un serveur
+      </a>
+    </div>
 
-  <a id="invite-link" href="#">Ajouter le bot à votre serveur</a>
-  
-  <h2>Mes serveurs qui ont le bot :</h2>
-  <ul id="guilds-list"></ul> <!-- Ici on va lister les guilds -->
+    <!-- Guilds Section -->
+    <h2 class="section-title">🏠 Mes serveurs</h2>
+    
+    <div id="guilds-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement des serveurs...</p>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // --- Affichage des infos utilisateur ---
-    fetch("/api/user")
+    // Charger les infos du bot
+    fetch("/api/bot-info")
       .then(res => res.json())
+      .then(bot => {
+        document.getElementById("bot-avatar").src = `https://cdn.discordapp.com/avatars/${bot.id}/${bot.avatar}.png`;
+      })
+      .catch(() => {});
+
+    // Charger les infos utilisateur
+    fetch("/api/user")
+      .then(res => {
+        if (!res.ok) throw new Error("Non connecté");
+        return res.json();
+      })
       .then(user => {
-        document.getElementById("greeting").textContent = `Salut ${user.username}#${user.discriminator} !`;
-        document.getElementById("avatar").src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+        const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+        document.getElementById("greeting").textContent = `Bienvenue, ${user.username} !`;
+        document.getElementById("user-avatar").src = avatarUrl;
+        document.getElementById("nav-avatar").src = avatarUrl;
+        document.getElementById("nav-username").textContent = user.username;
       })
       .catch(() => {
-        document.getElementById("greeting").textContent = "Utilisateur non connecté.";
+        window.location.href = "/auth/login";
       });
 
-
-    // --- Affichage des guilds de l'utilisateur ---
+    // Charger les guilds
     fetch("/api/guilds")
       .then(res => res.json())
       .then(guilds => {
-        const list = document.getElementById("guilds-list");
+        const container = document.getElementById("guilds-container");
+        
         if (guilds.length === 0) {
-          list.innerHTML = "<li>Aucun serveur disponible</li>";
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🤖</div>
+              <h3>Aucun serveur trouvé</h3>
+              <p>Ajoutez LazyBot à un serveur pour commencer à le configurer.</p>
+              <a id="invite-empty" href="#" class="btn btn-primary">Ajouter à un serveur</a>
+            </div>
+          `;
+          // Récupérer le lien pour le bouton empty state
+          fetch("/invite-bot")
+            .then(res => res.json())
+            .then(data => {
+              const btn = document.getElementById("invite-empty");
+              if (btn) btn.href = data.url;
+            });
         } else {
+          container.innerHTML = '<div class="guilds-grid"></div>';
+          const grid = container.querySelector('.guilds-grid');
+          
           guilds.forEach(g => {
-            const li = document.createElement("li");
-            li.style.cursor = "pointer";
-            li.style.padding = "8px";
-            li.style.border = "1px solid #ccc";
-            li.style.margin = "5px 0";
-            li.style.display = "flex";
-            li.style.alignItems = "center";
-            li.style.gap = "10px";
-            li.style.borderRadius = "8px";
-            li.style.backgroundColor = "#161a22"; // fond sombre pour chaque item
-            li.style.transition = "background 0.2s";
-
-            li.addEventListener("click", () => {
-              window.location.href = `/guild/${g.id}`;
-            });
-
-            li.addEventListener("mouseover", () => {
-              li.style.backgroundColor = "#5865F2"; // couleur Discord au hover
-              li.style.color = "white";
-            });
-
-            li.addEventListener("mouseout", () => {
-              li.style.backgroundColor = "#161a22";
-              li.style.color = "";
-            });
-
-            // Logo de la guild
-            if (g.icon) {
-              const img = document.createElement("img");
-              img.src = `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`;
-              img.alt = `${g.name} logo`;
-              img.style.width = "40px";
-              img.style.height = "40px";
-              img.style.borderRadius = "50%";
-              li.appendChild(img);
-            }
-
-            // Nom de la guild
-            const span = document.createElement("span");
-            span.textContent = g.name;
-            li.appendChild(span);
-
-            list.appendChild(li);
+            const card = document.createElement("div");
+            card.className = "guild-card";
+            card.onclick = () => window.location.href = `/guild/${g.id}`;
+            
+            const iconUrl = g.icon 
+              ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png`
+              : `https://cdn.discordapp.com/embed/avatars/0.png`;
+            
+            card.innerHTML = `
+              <div class="guild-card-header"></div>
+              <img class="guild-card-avatar" src="${iconUrl}" alt="${g.name}">
+              <div class="guild-card-body">
+                <h3 class="guild-card-name">${g.name}</h3>
+                <p class="guild-card-info">Cliquez pour configurer</p>
+              </div>
+              <div class="guild-card-footer">
+                <span class="btn btn-sm btn-primary">Configurer →</span>
+              </div>
+            `;
+            
+            grid.appendChild(card);
           });
         }
       })
       .catch(() => {
-        document.getElementById("guilds-list").innerHTML = "<li>Impossible de récupérer les guilds.</li>";
+        document.getElementById("guilds-container").innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">❌</div>
+            <h3>Erreur de chargement</h3>
+            <p>Impossible de récupérer la liste des serveurs.</p>
+            <button class="btn btn-primary" onclick="location.reload()">Réessayer</button>
+          </div>
+        `;
       });
-    
 
+    // Lien d'invitation
     fetch("/invite-bot")
       .then(res => res.json())
       .then(data => {
-        const link = document.getElementById("invite-link");
-        link.href = data.url; // met le lien dynamique
+        document.getElementById("invite-link").href = data.url;
       })
-      .catch(() => {
-        console.log("Impossible de récupérer le lien du bot.");
-      });
-
-    
+      .catch(() => console.log("Impossible de récupérer le lien du bot."));
   </script>
 </body>
 </html>

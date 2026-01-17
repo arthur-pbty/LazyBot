@@ -1,8 +1,8 @@
-const autoroleNewUserForm = document.getElementById("autorole-newuser-form");
 const autoroleEnabled = document.getElementById("autorole-enabled");
 const autoroleRole = document.getElementById("autorole-role");
-const statusAutoroleForm = document.getElementById("status-autorole-form");
+const saveAutorole = document.getElementById("save-autorole");
 
+// Charger la config
 fetch(`/api/bot/get-autorole-newuser-config/${guildId}`)
   .then(res => res.json())
   .then(cfg => {
@@ -10,20 +10,32 @@ fetch(`/api/bot/get-autorole-newuser-config/${guildId}`)
     autoroleRole.value = cfg.roleId;
   });
 
-autoroleNewUserForm.addEventListener("submit", async e => {
-  e.preventDefault();
+// Sauvegarder
+saveAutorole.addEventListener("click", async () => {
+  saveAutorole.disabled = true;
+  saveAutorole.textContent = "Sauvegarde...";
 
-  const res = await fetch("/api/bot/save-autorole-newuser-config", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      guildId,
-      enabled: autoroleEnabled.checked,
-      roleId: autoroleRole.value
-    })
-  });
+  try {
+    const res = await fetch("/api/bot/save-autorole-newuser-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guildId,
+        enabled: autoroleEnabled.checked,
+        roleId: autoroleRole.value
+      })
+    });
 
-  statusAutoroleForm.textContent = (await res.json()).success
-    ? "Auto-rôle sauvegardé ✅"
-    : "Erreur ❌";
+    const data = await res.json();
+    if (data.success) {
+      showStatus("status-autorole-form", "Configuration sauvegardée ✅", "success");
+    } else {
+      showStatus("status-autorole-form", "Erreur lors de la sauvegarde ❌", "error");
+    }
+  } catch (error) {
+    showStatus("status-autorole-form", "Erreur de connexion ❌", "error");
+  }
+
+  saveAutorole.disabled = false;
+  saveAutorole.textContent = "Sauvegarder";
 });

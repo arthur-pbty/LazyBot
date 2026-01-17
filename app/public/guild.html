@@ -1,455 +1,612 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
   <head>
-    <title>Dashboard du serveur</title>
+    <title>Configuration du serveur - LazyBot</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/guild.css">
   </head>
   <body>
-    <nav>
-      <a href="/">Accueil</a>
-      <a href="/dashboard">Tableau de bord</a>
-    </nav>
-
-    <h1 id="guild-name">Chargement...</h1>
-
-
-    <form id="welcome-form">
-      <label>
-        <input type="checkbox" id="welcome-enabled" />
-        Activer le message de bienvenue
-      </label>
-
-      <label>
-        Canal de bienvenue :
-        <br />
-        <select id="welcome-channel">
-        </select>
-      </label>
-
-      <label>
-        Message :
-        <br />
-        <textarea
-          id="welcome-message"
-          rows="4"
-          cols="50"
-          placeholder="Ex : Bienvenue {user} sur {server} 🎉"
-        ></textarea>
-      </label>
-
-      <small>
-        Variables disponibles :
-        <ul>
-          <li><code>{user}</code> → nom de l'utilisateur</li>
-          <li><code>{mention}</code> → mention de l'utilisateur</li>
-          <li><code>{server}</code> → nom du serveur</li>
-        </ul>
-      </small>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-welcome-form"></div>
-    </form>
-
-
-    <form id="goodbye-form">
-      <label>
-        <input type="checkbox" id="goodbye-enabled" />
-        Activer le message d'au revoir
-      </label>
-
-      <label>
-        Canal d'au revoir :
-        <br />
-        <select id="goodbye-channel">
-        </select>
-      </label>
-
-      <label>
-        Message :
-        <br />
-        <textarea
-          id="goodbye-message"
-          rows="4"
-          cols="50"
-          placeholder="Ex : Au revoir {user}, on espère te revoir sur {server} 👋"
-        ></textarea>
-      </label>
-
-      <small>
-        Variables disponibles :
-        <ul>
-          <li><code>{user}</code> → nom de l'utilisateur</li>
-          <li><code>{server}</code> → nom du serveur</li>
-        </ul>
-      </small>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-goodbye-form"></div>
-    </form>
-
-
-    <form id="autorole-newuser-form">
-      <label>
-        <input type="checkbox" id="autorole-enabled" />
-        Activer le rôle automatique pour les nouveaux membres
-      </label>
-
-      <label>
-        Rôle à attribuer :
-        <br />
-        <select id="autorole-role">
-        </select>
-      </label>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-autorole-form"></div>
-    </form>
-
-
-    <form id="autorole-vocal-form">
-      <label>
-        <input type="checkbox" id="autorole-vocal-enabled" />
-        Activer le rôle automatique pour les membres en vocal
-      </label>
-
-      <label>
-        Rôle à attribuer :
-        <br />
-        <select id="autorole-vocal-role">
-        </select>
-      </label>
-
-      <label>
-        Salon à éviter :
-        <br />
-        <select id="autorole-vocal-exclude-channel" multiple size="5">
-        </select>
-      </label>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-autorole-vocal-form"></div>
-    </form>
-
-
-    <form id="level-form">
-      <label>
-        <input type="checkbox" id="level-enabled" />
-        Activer le système de niveaux
-      </label>
-
-      <label>
-        <input type="checkbox" id="level-announcement-enabled" />
-        Annoncer les améliorations de niveau dans un canal
-      </label>
-
-      <label>
-        Canal d'affichage des améliorations de niveau :
-        <br />
-        <select id="level-announcements-channel">
-        </select>
-      </label>
-
-      <label>
-        Message d'amélioration de niveau :
-        <br />
-        <textarea
-          id="level-announcements-message"
-          rows="4"
-          cols="50"
-          placeholder="Ex : Félicitations {user}, tu es maintenant niveau {level} ! 🎉"
-        ></textarea>
-      </label>
-      <small>
-        Variables disponibles :
-        <ul>
-          <li><code>{user}</code> → nom de l'utilisateur</li>
-          <li><code>{mention}</code> → mention de l'utilisateur</li>
-          <li><code>{level}</code> → niveau atteint</li>
-          <li><code>{level-xp}</code> → points d'expérience du niveau</li>
-        </ul>
-      </small>
-
-      <label>
-        Courbe d'expérience des niveaux :
-        <br />
-        <select id="level-xp-curve-type">
-          <option value="constante">Constante</option>
-          <option value="linear">Linéaire</option>
-          <option value="quadratic">Quadratique</option>
-          <option value="exponential">Exponentielle</option>
-        </select>
-      </label>
-
-      <label>
-        Nombre d'expérience du premier niveau :
-        <br />
-        <input type="number" id="level-xp-multiplier" min="1" value="500" />
-      </label>
-
-      <label>
-        Annonce des niveaux tout les X niveaux :
-        <br />
-        <input type="number" id="level-announcement-every" min="1" value="1" />
-      </label>
-
-      <label>
-        Niveau maximum (0 pour infini) :
-        <br />
-        <input type="number" id="level-max-level" min="0" value="0" />
-      </label>
-
-      <label>
-        Rôle avec/sans expérience :
-        <br />
-        <select id="level-role-with-or-without-xp-type">
-          <option value="with">Avec</option>
-          <option value="without">Sans</option>
-        </select>
-        <br />
-        <select id="level-role-with-or-without-xp" multiple size="5">
-        </select>
-      </label>
-
-      <label>
-        Salon avec/sans expérience :
-        <br />
-        <select id="level-channel-with-or-without-xp-type">
-          <option value="with">Avec</option>
-          <option value="without">Sans</option>
-        </select>
-        <br />
-        <select id="level-channel-with-or-without-xp" multiple size="5">
-        </select>
-      </label>
-
-      <label>
-        <input type="checkbox" id="message-xp-enabled" />
-        Gagner de l'expérience en envoyant des messages
-      </label>
-
-      <label>
-        Gain de points d'expérience par message :
-        <br />
-        Entre
-        <input type="number" id="level-xp-per-message-min" min="1" value="15" />
-        et
-        <input type="number" id="level-xp-per-message-max" min="1" value="25" />
-        points d'expérience
-      </label>
-
-      <label>
-        Cooldown entre les messages pour gagner de l'XP (en secondes) :
-        <br />
-        <input type="number" id="level-xp-cooldown" min="0" value="2" />
-      </label>
-
-      <label>
-        <input type="checkbox" id="voice-xp-enabled" />
-        Gagner de l'expérience en étant en vocal
-      </label>
-
-      <label>
-        Gain de points d'expérience par minute en vocal :
-        <br />
-        Entre
-        <input type="number" id="level-xp-per-voice-min" min="1" value="10" />
-        et
-        <input type="number" id="level-xp-per-voice-max" min="1" value="20" />
-        points d'expérience
-      </label>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-level-form"></div>
-    </form>
-
-
-    <form id="economy-form">
-      <h2>💰 Système d'économie</h2>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-brand">
+          <img id="bot-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="LazyBot">
+          <span>LazyBot</span>
+        </a>
+        <div class="guild-info">
+          <img id="guild-icon" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Serveur">
+          <div class="guild-info-text">
+            <div id="guild-name" class="guild-info-name">Chargement...</div>
+            <div id="guild-id" class="guild-info-id"></div>
+          </div>
+        </div>
+      </div>
       
-      <label>
-        <input type="checkbox" id="economy-enabled" />
-        Activer le système d'économie
-      </label>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Configuration</div>
+          <a class="nav-item active" data-section="welcome">
+            <span class="nav-item-icon">👋</span>
+            Bienvenue
+          </a>
+          <a class="nav-item" data-section="goodbye">
+            <span class="nav-item-icon">👋</span>
+            Au revoir
+          </a>
+          <a class="nav-item" data-section="autorole">
+            <span class="nav-item-icon">🎭</span>
+            Rôles automatiques
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Systèmes</div>
+          <a class="nav-item" data-section="levels">
+            <span class="nav-item-icon">📈</span>
+            Niveaux
+          </a>
+          <a class="nav-item" data-section="economy">
+            <span class="nav-item-icon">💰</span>
+            Économie
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <a href="/dashboard">
+          <span>←</span> Retour au dashboard
+        </a>
+      </div>
+    </aside>
 
-      <label>
-        Nom de la monnaie :
-        <br />
-        <input type="text" id="economy-currency-name" value="coins" />
-      </label>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="breadcrumb">
+          <a href="/dashboard">Dashboard</a>
+          <span class="breadcrumb-separator">/</span>
+          <span id="breadcrumb-guild" class="breadcrumb-current">Serveur</span>
+        </div>
+        <div class="header-user">
+          <img id="user-avatar" src="" alt="">
+          <span id="user-name"></span>
+        </div>
+      </header>
 
-      <label>
-        Symbole de la monnaie :
-        <br />
-        <input type="text" id="economy-currency-symbol" value="💰" maxlength="10" />
-      </label>
+      <!-- Content Area -->
+      <div class="content-area">
+        
+        <!-- Section: Bienvenue -->
+        <section class="config-section active" id="section-welcome">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">👋</span>
+                <h3>Message de bienvenue</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="welcome-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Canal de bienvenue</label>
+                <select class="form-select" id="welcome-channel"></select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-textarea" id="welcome-message" rows="4" placeholder="Ex: Bienvenue {user} sur {server} 🎉"></textarea>
+              </div>
+              
+              <div class="variables-box">
+                <div class="variables-box-title">Variables disponibles</div>
+                <div class="variables-list">
+                  <span class="variable-tag"><code>{user}</code> <span>→ nom</span></span>
+                  <span class="variable-tag"><code>{mention}</code> <span>→ mention</span></span>
+                  <span class="variable-tag"><code>{server}</code> <span>→ serveur</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-welcome-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-welcome">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
 
-      <label>
-        Solde de départ :
-        <br />
-        <input type="number" id="economy-starting-balance" min="0" value="0" />
-      </label>
+        <!-- Section: Au revoir -->
+        <section class="config-section" id="section-goodbye">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">👋</span>
+                <h3>Message d'au revoir</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="goodbye-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Canal d'au revoir</label>
+                <select class="form-select" id="goodbye-channel"></select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea class="form-textarea" id="goodbye-message" rows="4" placeholder="Ex: Au revoir {user}, on espère te revoir sur {server} 👋"></textarea>
+              </div>
+              
+              <div class="variables-box">
+                <div class="variables-box-title">Variables disponibles</div>
+                <div class="variables-list">
+                  <span class="variable-tag"><code>{user}</code> <span>→ nom</span></span>
+                  <span class="variable-tag"><code>{server}</code> <span>→ serveur</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-goodbye-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-goodbye">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
 
-      <h3>📅 Récompense quotidienne (daily)</h3>
-      <label>
-        <input type="checkbox" id="economy-daily-enabled" checked />
-        Activer la commande daily
-      </label>
+        <!-- Section: Rôles automatiques -->
+        <section class="config-section" id="section-autorole">
+          <!-- Nouveaux membres -->
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">👤</span>
+                <h3>Rôle pour les nouveaux membres</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="autorole-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Rôle à attribuer</label>
+                <select class="form-select" id="autorole-role"></select>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-autorole-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-autorole">Sauvegarder</button>
+            </div>
+          </div>
 
-      <label>
-        Montant quotidien :
-        <br />
-        <input type="number" id="economy-daily-amount" min="1" value="100" />
-      </label>
+          <!-- Vocal -->
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">🎤</span>
+                <h3>Rôle pour les membres en vocal</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="autorole-vocal-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Rôle à attribuer</label>
+                <select class="form-select" id="autorole-vocal-role"></select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Salons à exclure</label>
+                <span class="form-sublabel">Maintenez Ctrl pour sélectionner plusieurs salons</span>
+                <select class="form-select" id="autorole-vocal-exclude-channel" multiple size="5"></select>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-autorole-vocal-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-autorole-vocal">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
 
-      <label>
-        Cooldown (heures) :
-        <br />
-        <input type="number" id="economy-daily-cooldown" min="1" value="24" />
-      </label>
+        <!-- Section: Niveaux -->
+        <section class="config-section" id="section-levels">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">📈</span>
+                <h3>Système de niveaux</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="level-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <!-- Annonces -->
+              <div class="inline-toggle">
+                <div class="inline-toggle-label">
+                  <span class="inline-toggle-title">Annonces de niveau</span>
+                  <span class="inline-toggle-desc">Annoncer quand un membre monte de niveau</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="level-announcement-enabled">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
 
-      <h3>💼 Travail (work)</h3>
-      <label>
-        <input type="checkbox" id="economy-work-enabled" checked />
-        Activer la commande work
-      </label>
+              <div class="form-group">
+                <label class="form-label">Canal d'annonces</label>
+                <select class="form-select" id="level-announcements-channel"></select>
+              </div>
 
-      <label>
-        Gain minimum :
-        <br />
-        <input type="number" id="economy-work-min" min="1" value="50" />
-      </label>
+              <div class="form-group">
+                <label class="form-label">Message d'annonce</label>
+                <textarea class="form-textarea" id="level-announcements-message" rows="3" placeholder="Félicitations {user}, tu es niveau {level} ! 🎉"></textarea>
+              </div>
 
-      <label>
-        Gain maximum :
-        <br />
-        <input type="number" id="economy-work-max" min="1" value="150" />
-      </label>
+              <div class="variables-box">
+                <div class="variables-box-title">Variables disponibles</div>
+                <div class="variables-list">
+                  <span class="variable-tag"><code>{user}</code> <span>→ nom</span></span>
+                  <span class="variable-tag"><code>{mention}</code> <span>→ mention</span></span>
+                  <span class="variable-tag"><code>{level}</code> <span>→ niveau</span></span>
+                  <span class="variable-tag"><code>{level-xp}</code> <span>→ XP du niveau</span></span>
+                </div>
+              </div>
 
-      <label>
-        Cooldown (minutes) :
-        <br />
-        <input type="number" id="economy-work-cooldown" min="1" value="60" />
-      </label>
+              <!-- Configuration XP -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">⚙️ Configuration XP</h4>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Courbe d'XP</label>
+                    <select class="form-select" id="level-xp-curve-type">
+                      <option value="constante">Constante</option>
+                      <option value="linear">Linéaire</option>
+                      <option value="quadratic">Quadratique</option>
+                      <option value="exponential">Exponentielle</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">XP premier niveau</label>
+                    <input type="number" class="form-input" id="level-xp-multiplier" min="1" value="500">
+                  </div>
+                </div>
 
-      <h3>🔫 Crime</h3>
-      <label>
-        <input type="checkbox" id="economy-crime-enabled" checked />
-        Activer la commande crime
-      </label>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Annonce tous les X niveaux</label>
+                    <input type="number" class="form-input" id="level-announcement-every" min="1" value="1">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Niveau maximum (0 = infini)</label>
+                    <input type="number" class="form-input" id="level-max-level" min="0" value="0">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Gain minimum :
-        <br />
-        <input type="number" id="economy-crime-min" min="1" value="100" />
-      </label>
+              <!-- XP Messages -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">💬 XP par messages</h4>
+                
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Activer XP messages</span>
+                    <span class="inline-toggle-desc">Gagner de l'XP en envoyant des messages</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="message-xp-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
 
-      <label>
-        Gain maximum :
-        <br />
-        <input type="number" id="economy-crime-max" min="1" value="500" />
-      </label>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">XP minimum</label>
+                    <input type="number" class="form-input" id="level-xp-per-message-min" min="1" value="15">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">XP maximum</label>
+                    <input type="number" class="form-input" id="level-xp-per-message-max" min="1" value="25">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (sec)</label>
+                    <input type="number" class="form-input" id="level-xp-cooldown" min="0" value="2">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Taux de réussite (%) :
-        <br />
-        <input type="number" id="economy-crime-success" min="1" max="100" value="50" />
-      </label>
+              <!-- XP Vocal -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🎤 XP en vocal</h4>
+                
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Activer XP vocal</span>
+                    <span class="inline-toggle-desc">Gagner de l'XP en étant en vocal</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="voice-xp-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
 
-      <label>
-        Amende en cas d'échec (% du solde) :
-        <br />
-        <input type="number" id="economy-crime-fine" min="0" max="100" value="30" />
-      </label>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">XP minimum / min</label>
+                    <input type="number" class="form-input" id="level-xp-per-voice-min" min="1" value="10">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">XP maximum / min</label>
+                    <input type="number" class="form-input" id="level-xp-per-voice-max" min="1" value="20">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Cooldown (minutes) :
-        <br />
-        <input type="number" id="economy-crime-cooldown" min="1" value="120" />
-      </label>
+              <!-- Rôles/Salons avec/sans XP -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🎯 Restrictions</h4>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Rôles avec/sans XP</label>
+                    <select class="form-select" id="level-role-with-or-without-xp-type">
+                      <option value="with">Avec XP uniquement</option>
+                      <option value="without">Sans XP</option>
+                    </select>
+                    <select class="form-select" id="level-role-with-or-without-xp" multiple size="4" style="margin-top: 8px;"></select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Salons avec/sans XP</label>
+                    <select class="form-select" id="level-channel-with-or-without-xp-type">
+                      <option value="with">Avec XP uniquement</option>
+                      <option value="without">Sans XP</option>
+                    </select>
+                    <select class="form-select" id="level-channel-with-or-without-xp" multiple size="4" style="margin-top: 8px;"></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-level-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-level">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
 
-      <h3>🕵️ Vol (steal)</h3>
-      <label>
-        <input type="checkbox" id="economy-steal-enabled" checked />
-        Activer la commande steal (voler d'autres joueurs)
-      </label>
+        <!-- Section: Économie -->
+        <section class="config-section" id="section-economy">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">💰</span>
+                <h3>Système d'économie</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="economy-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <!-- Config de base -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Nom de la monnaie</label>
+                  <input type="text" class="form-input" id="economy-currency-name" value="coins">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Symbole</label>
+                  <input type="text" class="form-input" id="economy-currency-symbol" value="💰" maxlength="10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Solde de départ</label>
+                  <input type="number" class="form-input" id="economy-starting-balance" min="0" value="0">
+                </div>
+              </div>
 
-      <label>
-        Taux de réussite (%) :
-        <br />
-        <input type="number" id="economy-steal-success" min="1" max="100" value="40" />
-      </label>
+              <!-- Daily -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">📅 Récompense quotidienne</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Commande /daily</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-daily-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Montant</label>
+                    <input type="number" class="form-input" id="economy-daily-amount" min="1" value="100">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (heures)</label>
+                    <input type="number" class="form-input" id="economy-daily-cooldown" min="1" value="24">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        % maximum du portefeuille volable :
-        <br />
-        <input type="number" id="economy-steal-max-percent" min="1" max="100" value="50" />
-      </label>
+              <!-- Work -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">💼 Travail</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Commande /work</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-work-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Gain min</label>
+                    <input type="number" class="form-input" id="economy-work-min" min="1" value="50">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Gain max</label>
+                    <input type="number" class="form-input" id="economy-work-max" min="1" value="150">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (min)</label>
+                    <input type="number" class="form-input" id="economy-work-cooldown" min="1" value="60">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Amende en cas d'échec (% de votre solde, donné à la victime) :
-        <br />
-        <input type="number" id="economy-steal-fine" min="0" max="100" value="25" />
-      </label>
+              <!-- Crime -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🔫 Crime</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Commande /crime</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-crime-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Gain min</label>
+                    <input type="number" class="form-input" id="economy-crime-min" min="1" value="100">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Gain max</label>
+                    <input type="number" class="form-input" id="economy-crime-max" min="1" value="500">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (min)</label>
+                    <input type="number" class="form-input" id="economy-crime-cooldown" min="1" value="120">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Taux de réussite (%)</label>
+                    <input type="number" class="form-input" id="economy-crime-success" min="1" max="100" value="50">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Amende échec (% solde)</label>
+                    <input type="number" class="form-input" id="economy-crime-fine" min="0" max="100" value="30">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Cooldown (minutes) :
-        <br />
-        <input type="number" id="economy-steal-cooldown" min="1" value="180" />
-      </label>
+              <!-- Steal -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🕵️ Vol</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Commande /steal</span>
+                    <span class="inline-toggle-desc">Voler d'autres joueurs</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-steal-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Taux de réussite (%)</label>
+                    <input type="number" class="form-input" id="economy-steal-success" min="1" max="100" value="40">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">% max volable</label>
+                    <input type="number" class="form-input" id="economy-steal-max-percent" min="1" max="100" value="50">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Amende échec (%)</label>
+                    <input type="number" class="form-input" id="economy-steal-fine" min="0" max="100" value="25">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (min)</label>
+                    <input type="number" class="form-input" id="economy-steal-cooldown" min="1" value="180">
+                  </div>
+                </div>
+              </div>
 
-      <h3>💬 Argent par message</h3>
-      <label>
-        <input type="checkbox" id="economy-message-money-enabled" />
-        Gagner de l'argent en envoyant des messages
-      </label>
+              <!-- Message Money -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">💬 Argent par message</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Gagner de l'argent en envoyant des messages</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-message-money-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Gain min</label>
+                    <input type="number" class="form-input" id="economy-message-money-min" min="1" value="1">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Gain max</label>
+                    <input type="number" class="form-input" id="economy-message-money-max" min="1" value="5">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cooldown (sec)</label>
+                    <input type="number" class="form-input" id="economy-message-money-cooldown" min="1" value="60">
+                  </div>
+                </div>
+              </div>
 
-      <label>
-        Gain par message :
-        <br />
-        Entre
-        <input type="number" id="economy-message-money-min" min="1" value="1" />
-        et
-        <input type="number" id="economy-message-money-max" min="1" value="5" />
-      </label>
+              <!-- Voice Money -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🎤 Argent en vocal</h4>
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Gagner de l'argent en étant en vocal</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="economy-voice-money-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Gain min</label>
+                    <input type="number" class="form-input" id="economy-voice-money-min" min="1" value="5">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Gain max</label>
+                    <input type="number" class="form-input" id="economy-voice-money-max" min="1" value="15">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Intervalle (min)</label>
+                    <input type="number" class="form-input" id="economy-voice-money-interval" min="1" value="5">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-economy-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-economy">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
 
-      <label>
-        Cooldown (secondes) :
-        <br />
-        <input type="number" id="economy-message-money-cooldown" min="1" value="60" />
-      </label>
+      </div>
+    </main>
 
-      <h3>🎤 Argent en vocal</h3>
-      <label>
-        <input type="checkbox" id="economy-voice-money-enabled" />
-        Gagner de l'argent en étant en vocal
-      </label>
-
-      <label>
-        Gain par intervalle :
-        <br />
-        Entre
-        <input type="number" id="economy-voice-money-min" min="1" value="5" />
-        et
-        <input type="number" id="economy-voice-money-max" min="1" value="15" />
-      </label>
-
-      <label>
-        Intervalle de gain (minutes) :
-        <br />
-        <input type="number" id="economy-voice-money-interval" min="1" value="5" />
-      </label>
-
-      <button type="submit">Sauvegarder</button>
-      <div id="status-economy-form"></div>
-    </form>
-
-
-    
-    
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" id="mobile-toggle">☰</button>
 
     <script src="/guild/guildBase.js"></script>
+    <script src="/guild/navigation.js"></script>
     <script src="/guild/welcomeForm.js"></script>
     <script src="/guild/goodbyeForm.js"></script>
     <script src="/guild/autoroleNewUserForm.js"></script>

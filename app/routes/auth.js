@@ -8,6 +8,11 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
 module.exports = (app, db, client) => {
+  // --- Redirection login ---
+  router.get("/login", (req, res) => {
+    res.redirect("/auth/discord");
+  });
+
   // --- Connexion Discord ---
   router.get("/discord", (req, res) => {
     const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20guilds`;

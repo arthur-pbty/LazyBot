@@ -1,137 +1,280 @@
-/* ===== Reset minimal ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+@import url('global.css');
+
+/* ===== Navigation ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: rgba(22, 27, 34, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-md) 0;
 }
 
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.navbar-brand img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.navbar-link {
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.navbar-link:hover {
+  color: var(--text-primary);
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.navbar-user img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+}
+
+.navbar-user span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ===== Dashboard Layout ===== */
 body {
-  background-color: #1e1f29; /* fond sombre type Discord */
-  color: #ffffff;
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+/* ===== Dashboard Header ===== */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 20px rgba(88, 101, 242, 0.3);
+}
+
+.user-details h1 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.user-details p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ===== Section Title ===== */
+.section-title {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* ===== Guilds Grid ===== */
+.guilds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.guild-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
+  cursor: pointer;
+}
+
+.guild-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 30px rgba(88, 101, 242, 0.15);
+}
+
+.guild-card-header {
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary), #7289da);
+  position: relative;
+  overflow: visible;
+}
+
+.guild-card-avatar {
+  position: absolute;
+  bottom: -30px;
+  left: var(--spacing-md);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid var(--bg-card);
+  background-color: var(--bg-dark);
+  object-fit: cover;
+}
+
+.guild-card-body {
+  padding: var(--spacing-lg);
+  padding-top: calc(var(--spacing-lg) + 20px);
+}
+
+.guild-card-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.guild-card-info {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.guild-card-footer {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ===== Loading State ===== */
+.loading {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  justify-content: center;
+  padding: var(--spacing-2xl);
 }
 
-/* ===== Navigation ===== */
-nav {
-  width: 100%;
-  max-width: 800px;
-  display: flex;
-  justify-content: flex-start;
-  background-color: #2f3136;
-  padding: 10px 20px;
-  border-radius: 10px;
-  margin-bottom: 30px;
-}
-
-nav a {
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-nav a:hover {
-  color: #5865f2;
-}
-
-/* ===== Titres ===== */
-h1, h2 {
-  text-align: center;
-}
-
-h1 {
-  font-size: 2.5rem;
-  margin-bottom: 15px;
-}
-
-h2 {
-  font-size: 1.8rem;
-  margin: 25px 0 10px 0;
-  border-bottom: 2px solid #5865f2;
-  display: inline-block;
-  padding-bottom: 5px;
-}
-
-/* ===== Avatar ===== */
-#avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin: 10px 0 20px 0;
-  border: 2px solid #5865f2;
-}
-
-/* ===== Bouton d'invitation ===== */
-#invite-link {
-  display: inline-block;
-  background-color: #5865f2;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  margin-bottom: 30px;
-  transition: background 0.2s;
-}
-
-#invite-link:hover {
-  background-color: #4752c4;
-}
-
-/* ===== Liste des guilds ===== */
-ul#guilds-list {
-  list-style: none;
-  width: 100%;
-  max-width: 800px;
-  padding: 0;
-}
-
-ul#guilds-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background-color: #161a22;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-ul#guilds-list li:hover {
-  background-color: #5865f2;
-  color: white;
-}
-
-ul#guilds-list li img {
+.spinner {
   width: 40px;
   height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary);
   border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading p {
+  margin-top: var(--spacing-md);
+  color: var(--text-secondary);
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 600px) {
-  body {
-    padding: 10px;
-  }
-
-  nav {
+@media (max-width: 768px) {
+  .dashboard-header {
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
   }
-
-  ul#guilds-list li {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  
+  .user-avatar {
+    width: 48px;
+    height: 48px;
   }
+  
+  .user-details h1 {
+    font-size: 1.25rem;
+  }
+  
+  .guilds-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-  ul#guilds-list li img {
-    margin-bottom: 5px;
+@media (max-width: 480px) {
+  .navbar-nav .navbar-link {
+    display: none;
   }
 }

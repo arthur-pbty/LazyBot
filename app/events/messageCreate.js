@@ -1,4 +1,4 @@
-const { Events } = require("discord.js");
+const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db");
 
 module.exports = {
@@ -31,25 +31,31 @@ module.exports = {
       [guildId],
       (err, row) => {
         if (err || !row || !row.enabled || !row.gain_xp_on_message) return;
-        if (row.role_with_without_type === "with") {
+        
+        const roleWithWithoutType = row.role_with_without_type || "without";
+        const salonWithWithoutType = row.salon_with_without_type || "without";
+        
+        if (roleWithWithoutType === "with") {
           const userRoles = message.member.roles.cache;
           const requiredRoles = JSON.parse(row.role_with_without_xp || "[]");
           if (!requiredRoles.some(roleId => userRoles.has(roleId))) {
             return;
           }
-        } else if (row.role_with_without_type === "without") {
+        } else if (roleWithWithoutType === "without") {
           const userRoles = message.member.roles.cache;
           const excludedRoles = JSON.parse(row.role_with_without_xp || "[]");
           if (excludedRoles.some(roleId => userRoles.has(roleId))) {
             return;
           }
-        } else if (row.salon_with_without_type === "with") {
+        }
+        
+        if (salonWithWithoutType === "with") {
           const channelId = message.channel.id;
           const requiredChannels = JSON.parse(row.salon_with_without_xp || "[]");
           if (!requiredChannels.includes(channelId)) {
             return;
           }
-        } else if (row.salon_with_without_type === "without") {
+        } else if (salonWithWithoutType === "without") {
           const channelId = message.channel.id;
           const excludedChannels = JSON.parse(row.salon_with_without_xp || "[]");
           if (excludedChannels.includes(channelId)) {
@@ -64,13 +70,14 @@ module.exports = {
           (err, userRow) => {
             if (err) return;
             
+            const cooldownSeconds = row.cooldown_xp_message_seconds ?? 60;
             const lastTimestamp = userRow ? userRow.last_xp_message_timestamp || 0 : 0;
-            if (now - lastTimestamp < row.cooldown_xp_message_seconds * 1000) {
+            if (now - lastTimestamp < cooldownSeconds * 1000) {
               return;
             }
   
-            const minXp = row.gain_xp_message_lower_bound;
-            const maxXp = row.gain_xp_message_upper_bound;
+            const minXp = row.gain_xp_message_lower_bound ?? 15;
+            const maxXp = row.gain_xp_message_upper_bound ?? 25;
             const xpToAdd = Math.floor(Math.random() * (maxXp - minXp + 1)) + minXp;
   
             let newXp;
@@ -84,17 +91,21 @@ module.exports = {
               newLevel = 1;
             }
             
-            const multiplier = row.multiplier_courbe_for_level;
+            const multiplier = row.multiplier_courbe_for_level ?? 100;
+            const courbeType = row.xp_courbe_type || "linear";
             let fonction_courbe;
             
-            if (row.xp_courbe_type === "constante") {
+            if (courbeType === "constante") {
               fonction_courbe = (level) => multiplier;
-            } else if (row.xp_courbe_type === "linear") {
+            } else if (courbeType === "linear") {
               fonction_courbe = (level) => (level) * multiplier;
-            } else if (row.xp_courbe_type === "quadratic") {
+            } else if (courbeType === "quadratic") {
               fonction_courbe = (level) => (level) * (level) * multiplier;
-            } else if (row.xp_courbe_type === "exponential") {
+            } else if (courbeType === "exponential") {
               fonction_courbe = (level) => Math.pow(2, (level - 1)) * multiplier;
+            } else {
+              // Fallback au cas où
+              fonction_courbe = (level) => (level) * multiplier;
             }
   
             let xpForNextLevel = fonction_courbe(newLevel);
@@ -106,13 +117,27 @@ module.exports = {
               if (row.level_announcements_enabled && (newLevel % row.level_annoncement_every_level === 0)) {
                 const channel = message.guild.channels.cache.get(row.level_announcements_channel_id);
                 if (channel) {
-                  let announcementMsg = row.level_announcements_message;
+                  let announcementMsg = row.level_announcements_message || "🎉 {mention} a atteint le niveau {level} !";
                   announcementMsg = announcementMsg
                     .replace("{user}", message.author.username)
                     .replace("{mention}", `<@${message.author.id}>`)
                     .replace("{level}", newLevel)
                     .replace("{level-xp}", xpForNextLevel);
-                  channel.send(announcementMsg);
+
+                  const embed = new EmbedBuilder()
+                    .setColor(0xFEE75C)
+                    .setTitle("🎉 Level Up !")
+                    .setDescription(announcementMsg)
+                    .setThumbnail(message.author.displayAvatarURL({ dynamic: true, size: 256 }))
+                    .addFields(
+                      { name: "Nouveau niveau", value: `${newLevel}`, inline: true },
+                      { name: "XP pour le prochain", value: `${xpForNextLevel}`, inline: true }
+                    )
+                    .setFooter({ text: message.guild.name, iconURL: message.guild.iconURL({ dynamic: true }) })
+                    .setTimestamp();
+
+                  // @ mention car c'est une notification importante
+                  channel.send({ content: `<@${message.author.id}>`, embeds: [embed] });
                 }
               }
             }
