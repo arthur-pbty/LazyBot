@@ -9,6 +9,24 @@ const db = new sqlite3.Database(
   }
 );
 
+db.getAsync = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+db.allAsync = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
+
 // Création de la table si elle n'existe pas
 db.exec(`
   CREATE TABLE IF NOT EXISTS welcome_config (
