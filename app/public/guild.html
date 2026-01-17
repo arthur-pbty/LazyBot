@@ -50,6 +50,10 @@
             <span class="nav-item-icon">💰</span>
             Économie
           </a>
+          <a class="nav-item" data-section="privateroom">
+            <span class="nav-item-icon">🔊</span>
+            Salons temporaires
+          </a>
         </div>
       </nav>
       
@@ -599,6 +603,58 @@
           </div>
         </section>
 
+        <!-- Section: Salons vocaux temporaires -->
+        <section class="config-section" id="section-privateroom">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">🔊</span>
+                <h3>Salons vocaux temporaires</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="privateroom-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <div class="info-box">
+                <strong>💡 Comment ça marche ?</strong><br>
+                Quand un membre rejoint le salon "créateur", un nouveau salon vocal est automatiquement créé pour lui.
+                Le salon est supprimé quand il devient vide.
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Salon créateur</label>
+                <span class="form-sublabel">Le salon vocal que les membres rejoignent pour créer leur salon</span>
+                <select class="form-select" id="privateroom-creator-channel"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Catégorie des salons créés</label>
+                <span class="form-sublabel">Les salons temporaires seront créés dans cette catégorie</span>
+                <select class="form-select" id="privateroom-category"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Format du nom du salon</label>
+                <input type="text" class="form-input" id="privateroom-name-format" value="🔊 Salon de {user}" placeholder="🔊 Salon de {user}">
+              </div>
+
+              <div class="variables-box">
+                <div class="variables-box-title">Variables disponibles</div>
+                <div class="variables-list">
+                  <span class="variable-tag"><code>{user}</code> <span>→ nom d'utilisateur</span></span>
+                  <span class="variable-tag"><code>{displayname}</code> <span>→ pseudo serveur</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="config-card-footer">
+              <div id="status-privateroom-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="save-privateroom">Sauvegarder</button>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -613,5 +669,6 @@
     <script src="/guild/autoroleVocalForm.js"></script>
     <script src="/guild/levelForm.js"></script>
     <script src="/guild/economyForm.js"></script>
+    <script src="/guild/privateroomForm.js"></script>
   </body>
 </html>

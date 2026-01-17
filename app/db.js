@@ -161,6 +161,21 @@ db.exec(`
     purchased_at INTEGER NOT NULL,
     FOREIGN KEY (item_id) REFERENCES shop_items(id)
   );
+
+  CREATE TABLE IF NOT EXISTS privateroom_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    creator_channel_id TEXT,
+    category_id TEXT,
+    channel_name_format TEXT NOT NULL DEFAULT '🔊 Salon de {user}'
+  );
+
+  CREATE TABLE IF NOT EXISTS temp_voice_channels (
+    channel_id TEXT PRIMARY KEY,
+    guild_id TEXT NOT NULL,
+    owner_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
 `);
 
 module.exports = db;

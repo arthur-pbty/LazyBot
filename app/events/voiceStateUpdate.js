@@ -1,4 +1,4 @@
-const { Events } = require("discord.js");
+const { Events, ChannelType, PermissionFlagsBits } = require("discord.js");
 const db = require("../db");
 
 // Store voice join times and intervals for economy
@@ -8,6 +8,9 @@ const voiceMoneyIntervals = new Map(); // guildId_userId -> intervalId
 module.exports = {
   name: Events.VoiceStateUpdate,
   async execute(client, oldState, newState) {
+    // ===== PRIVATE ROOM (TEMP VOICE CHANNELS) =====
+    await handlePrivateRoom(client, oldState, newState);
+    
     if (newState.member.user.bot) return;
     
     const guildId = newState.guild.id;
@@ -114,3 +117,108 @@ module.exports = {
     );
   },
 };
+
+// ===== PRIVATE ROOM HANDLER =====
+async function handlePrivateRoom(client, oldState, newState) {
+  const guildId = newState.guild.id;
+  const member = newState.member;
+
+  // Récupérer la configuration
+  const config = await db.getAsync(
+    "SELECT enabled, creator_channel_id, category_id, channel_name_format FROM privateroom_config WHERE guild_id = ?",
+    [guildId]
+  );
+
+  if (!config || !config.enabled) {
+    // Même si désactivé, vérifier si un salon temp doit être supprimé
+    await checkAndDeleteEmptyTempChannel(oldState);
+    return;
+  }
+
+  // Utilisateur rejoint le salon créateur
+  if (newState.channelId === config.creator_channel_id) {
+    try {
+      // Formater le nom du salon
+      let channelName = config.channel_name_format || '🔊 Salon de {user}';
+      channelName = channelName
+        .replace(/{user}/g, member.user.username)
+        .replace(/{displayname}/g, member.displayName);
+
+      // Créer le salon vocal
+      const newChannel = await newState.guild.channels.create({
+        name: channelName,
+        type: ChannelType.GuildVoice,
+        parent: config.category_id || null,
+        permissionOverwrites: [
+          {
+            id: member.id,
+            allow: [
+              PermissionFlagsBits.ManageChannels,
+              PermissionFlagsBits.MuteMembers,
+              PermissionFlagsBits.DeafenMembers,
+              PermissionFlagsBits.MoveMembers,
+              PermissionFlagsBits.Connect,
+              PermissionFlagsBits.Speak
+            ]
+          }
+        ]
+      });
+
+      // Enregistrer le salon dans la base de données
+      await new Promise((resolve, reject) => {
+        db.run(
+          "INSERT INTO temp_voice_channels (channel_id, guild_id, owner_id, created_at) VALUES (?, ?, ?, ?)",
+          [newChannel.id, guildId, member.id, Date.now()],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Déplacer l'utilisateur dans le nouveau salon
+      await member.voice.setChannel(newChannel);
+    } catch (err) {
+      console.error("Erreur création salon temporaire:", err);
+    }
+  }
+
+  // Vérifier si l'ancien salon était un salon temporaire vide
+  await checkAndDeleteEmptyTempChannel(oldState);
+}
+
+async function checkAndDeleteEmptyTempChannel(oldState) {
+  if (!oldState.channelId) return;
+
+  const oldChannel = oldState.guild.channels.cache.get(oldState.channelId);
+  if (!oldChannel) return;
+
+  // Vérifier si c'est un salon temporaire
+  const tempChannel = await db.getAsync(
+    "SELECT channel_id FROM temp_voice_channels WHERE channel_id = ?",
+    [oldState.channelId]
+  );
+
+  if (!tempChannel) return;
+
+  // Vérifier si le salon est vide
+  if (oldChannel.members.size === 0) {
+    try {
+      // Supprimer le salon
+      await oldChannel.delete("Salon temporaire vide");
+      
+      // Supprimer de la base de données
+      db.run(
+        "DELETE FROM temp_voice_channels WHERE channel_id = ?",
+        [oldState.channelId]
+      );
+    } catch (err) {
+      console.error("Erreur suppression salon temporaire:", err);
+      // Si le salon n'existe plus, le supprimer quand même de la DB
+      db.run(
+        "DELETE FROM temp_voice_channels WHERE channel_id = ?",
+        [oldState.channelId]
+      );
+    }
+  }
+}

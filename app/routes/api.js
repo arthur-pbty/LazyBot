@@ -748,5 +748,86 @@ module.exports = (app, db, client) => {
     );
   });
 
+  // ===== PRIVATE ROOM CONFIG =====
+  router.post("/bot/save-privateroom-config", express.json(), (req, res) => {
+    const { guildId, enabled, creatorChannelId, categoryId, channelNameFormat } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
+
+    db.run(
+      `INSERT INTO privateroom_config (guild_id, enabled, creator_channel_id, category_id, channel_name_format)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(guild_id) DO UPDATE SET
+         enabled = ?, creator_channel_id = ?, category_id = ?, channel_name_format = ?`,
+      [
+        guildId,
+        enabled ? 1 : 0,
+        creatorChannelId,
+        categoryId,
+        channelNameFormat || '🔊 Salon de {user}',
+        enabled ? 1 : 0,
+        creatorChannelId,
+        categoryId,
+        channelNameFormat || '🔊 Salon de {user}'
+      ],
+      err => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+
+  router.get("/bot/get-privateroom-config/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    db.get(
+      "SELECT enabled, creator_channel_id, category_id, channel_name_format FROM privateroom_config WHERE guild_id = ?",
+      [guildId],
+      (err, row) => {
+        if (err || !row) {
+          return res.json({
+            enabled: false,
+            creatorChannelId: null,
+            categoryId: null,
+            channelNameFormat: '🔊 Salon de {user}'
+          });
+        }
+        res.json({
+          enabled: !!row.enabled,
+          creatorChannelId: row.creator_channel_id,
+          categoryId: row.category_id,
+          channelNameFormat: row.channel_name_format || '🔊 Salon de {user}'
+        });
+      }
+    );
+  });
+
+  router.get("/bot/get-categories/:guildId", (req, res) => {
+    const { guildId } = req.params;
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) {
+      return res.status(404).json({ error: "Serveur non trouvé" });
+    }
+
+    const categories = guild.channels.cache
+      .filter(c => c.type === 4) // 4 = GuildCategory
+      .map(c => ({ id: c.id, name: c.name }));
+
+    res.json(categories);
+  });
+
   app.use("/api", router);
 };
