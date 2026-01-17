@@ -12,7 +12,7 @@ Bot Discord configurable via un dashboard web pour gérer :
 
 1. Cloner le projet :  
 ```bash
-git clone <URL_DU_REPO>
+git clone https://github.com/arthur-pbty/LazyBot.git
 cd mon-bot-discord
 ````
 

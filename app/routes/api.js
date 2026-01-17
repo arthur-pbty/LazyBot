@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const loadSlashCommands = require("../slash_commands");
 
 module.exports = (app, db, client) => {
 
@@ -371,7 +372,7 @@ module.exports = (app, db, client) => {
             levelAnnouncementsChannelId: null,
             levelAnnouncementsMessage: "",
             xpCourbeType: "exponential",
-            multiplierCourbeForLevel: 1,
+            multiplierCourbeForLevel: 500,
             levelAnnouncementEveryLevel: 1,
             levelMax: 0,
             roleWithWithoutType: "with",
@@ -540,6 +541,8 @@ module.exports = (app, db, client) => {
           console.error(err);
           return res.status(500).json({ success: false });
         }
+        // Reload slash commands for this guild
+        loadSlashCommands(client, guildId);
         res.json({ success: true });
       }
     );
