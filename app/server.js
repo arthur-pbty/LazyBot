@@ -81,6 +81,14 @@ app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
+app.get("/tos", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tos.html"));
+});
+
+app.get("/privacy", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "privacy.html"));
+});
+
 
 // --- Lancement du serveur ---
 app.listen(PORT, () => console.log(`Serveur lancé sur http://localhost:${PORT}`));
