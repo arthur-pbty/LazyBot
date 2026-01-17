@@ -19,13 +19,14 @@ cd mon-bot-discord
 3. Créer un fichier `.env` :
 
 ```env
-TOKEN=VOTRE_TOKEN_BOT
-CLIENT_ID=VOTRE_CLIENT_ID
-CLIENT_SECRET=VOTRE_CLIENT_SECRET
-REDIRECT_URI=http://localhost:3000/auth/discord/callback
-SESSION_SECRET=un_secret_aleatoire
+CLIENT_ID=VOTRE_BOT_CLIENT_ID
+CLIENT_SECRET=VOTRE_BOT_CLIENT_SECRET
+REDIRECT_URI=https://your_domaine.com/auth/discord/callback
 PORT=3000
+BOT_TOKEN=VOTRE_TOKEN_BOT
+SESSION_SECRET=un_secret_aleatoire_pour_les_sessions
 DB_PATH=database.sqlite
+OWNER=VOTRE_ID_UTILISATEUR
 ```
 
 4. Lancer le serveur :

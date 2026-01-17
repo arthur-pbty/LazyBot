@@ -69,6 +69,12 @@ db.exec(`
     last_xp_message_timestamp INTEGER,
     PRIMARY KEY (guild_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS prefix (
+    guildId TEXT NOT NULL,
+    prefix TEXT NOT NULL DEFAULT '!',
+    PRIMARY KEY (guildId)
+  );
 `);
 
 module.exports = db;

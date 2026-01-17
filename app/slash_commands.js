@@ -13,17 +13,15 @@ module.exports = async (client, guildId = null) => {
      ========================= */
 
   if (!guildId) {
-    const globalCommands = [
-      {
-        name: 'ping',
-        description: 'Replies with Pong!',
-      },
-    ];
+    const globalCommands = [];
+    client.commands.forEach((command) => {
+      globalCommands.push(command.data.toJSON());
+    });
 
     try {
       console.log('Refreshing GLOBAL slash commands...');
       await rest.put(
-        Routes.applicationCommands(CLIENT_ID),
+        Routes.applicationCommands(client.user.id),
         { body: globalCommands }
       );
       console.log('Global slash commands loaded');
@@ -69,7 +67,7 @@ module.exports = async (client, guildId = null) => {
 
         try {
           await rest.put(
-            Routes.applicationGuildCommands(CLIENT_ID, guild.id),
+            Routes.applicationGuildCommands(client.user.id, guild.id),
             { body: guildCommands }
           );
           console.log(`Guild commands updated for ${guild.name}`);

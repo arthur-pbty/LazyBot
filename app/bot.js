@@ -7,6 +7,9 @@ const e = require('express');
 
 const client = new Client({ intents: Object.values(GatewayIntentBits) });
 
+require("./loader/events.js")(client);
+require("./loader/commands.js")(client);
+
 client.once(Events.ClientReady, async () => {
   console.log(`Bot connecté en tant que ${client.user.tag}`);
   await loadSlashCommands(client);
@@ -16,10 +19,6 @@ client.once(Events.ClientReady, async () => {
 
 client.on(Events.InteractionCreate, async interaction => {
   if (!interaction.isChatInputCommand()) return;
-
-  if (interaction.commandName === 'ping') {
-    await interaction.reply('Pong!');
-  }
 
   else if (interaction.commandName === 'level') {
     const guildId = interaction.guild.id;
