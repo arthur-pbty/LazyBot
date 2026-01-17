@@ -27,6 +27,7 @@ BOT_TOKEN=VOTRE_TOKEN_BOT
 SESSION_SECRET=un_secret_aleatoire_pour_les_sessions
 DB_PATH=database.sqlite
 OWNER=VOTRE_ID_UTILISATEUR
+URL=https://ton-domaine.com
 ```
 
 4. Lancer le serveur :
