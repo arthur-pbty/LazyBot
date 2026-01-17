@@ -184,6 +184,16 @@ db.exec(`
     current_count INTEGER NOT NULL DEFAULT 0,
     last_user_id TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS stats_channels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    stat_type TEXT NOT NULL,
+    role_id TEXT,
+    format TEXT NOT NULL DEFAULT '{stat}',
+    UNIQUE(guild_id, channel_id)
+  );
 `);
 
 module.exports = db;

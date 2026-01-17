@@ -552,6 +552,43 @@ body {
   z-index: 200;
 }
 
+/* ===== Stats Channels List ===== */
+.stats-channel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+  gap: var(--spacing-md);
+}
+
+.stats-channel-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.stats-channel-info strong {
+  color: var(--text-primary);
+}
+
+.stats-channel-type {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.stats-channel-format {
+  background: var(--bg-card);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  width: fit-content;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
   .sidebar {

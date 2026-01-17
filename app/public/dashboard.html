@@ -117,8 +117,9 @@
               : `https://cdn.discordapp.com/embed/avatars/0.png`;
             
             card.innerHTML = `
-              <div class="guild-card-header"></div>
-              <img class="guild-card-avatar" src="${iconUrl}" alt="${g.name}">
+              <div class="guild-card-header">
+                <img class="guild-card-avatar" src="${iconUrl}" alt="${g.name}">
+              </div>
               <div class="guild-card-body">
                 <h3 class="guild-card-name">${g.name}</h3>
                 <p class="guild-card-info">Cliquez pour configurer</p>

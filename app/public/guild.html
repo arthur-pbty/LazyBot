@@ -58,6 +58,10 @@
             <span class="nav-item-icon">🔢</span>
             Comptage
           </a>
+          <a class="nav-item" data-section="statschannels">
+            <span class="nav-item-icon">📊</span>
+            Salons de stats
+          </a>
         </div>
       </nav>
       
@@ -698,6 +702,80 @@
           </div>
         </section>
 
+        <!-- Section: Salons de statistiques -->
+        <section class="config-section" id="section-statschannels">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">📊</span>
+                <h3>Salons de statistiques</h3>
+              </div>
+            </div>
+            <div class="config-card-body">
+              <div class="info-box">
+                <strong>💡 Comment ça marche ?</strong><br>
+                Créez des salons vocaux dont le nom affiche des statistiques du serveur en temps réel.
+                Les noms sont mis à jour automatiquement toutes les 5 minutes.
+              </div>
+
+              <!-- Formulaire d'ajout -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">➕ Ajouter un salon de stats</h4>
+                
+                <div class="form-group">
+                  <label class="form-label">Salon vocal</label>
+                  <select class="form-select" id="stats-channel-select"></select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Type de statistique</label>
+                  <select class="form-select" id="stats-type-select">
+                    <option value="members">👥 Membres (total)</option>
+                    <option value="humans">👤 Membres (sans bots)</option>
+                    <option value="bots">🤖 Bots</option>
+                    <option value="online">🟢 Membres en ligne</option>
+                    <option value="voice">🎤 Membres en vocal</option>
+                    <option value="roles">🎭 Nombre de rôles</option>
+                    <option value="channels">📺 Nombre de salons</option>
+                    <option value="boosts">🚀 Boosts</option>
+                    <option value="boost_level">💎 Niveau de boost</option>
+                    <option value="role_members">🏷️ Membres avec un rôle</option>
+                  </select>
+                </div>
+
+                <div class="form-group" id="stats-role-group" style="display: none;">
+                  <label class="form-label">Rôle à compter</label>
+                  <select class="form-select" id="stats-role-select"></select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Format du nom</label>
+                  <input type="text" class="form-input" id="stats-format-input" value="📊 Membres: {stat}" placeholder="📊 Membres: {stat}">
+                </div>
+
+                <div class="variables-box">
+                  <div class="variables-box-title">Variables disponibles</div>
+                  <div class="variables-list">
+                    <span class="variable-tag"><code>{stat}</code> <span>→ valeur de la statistique</span></span>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="add-stats-channel" style="margin-top: var(--spacing-md);">
+                  ➕ Ajouter le salon
+                </button>
+              </div>
+
+              <!-- Liste des salons configurés -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">📋 Salons configurés</h4>
+                <div id="stats-channels-list">
+                  <p class="text-muted">Aucun salon configuré.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -714,5 +792,6 @@
     <script src="/guild/economyForm.js"></script>
     <script src="/guild/privateroomForm.js"></script>
     <script src="/guild/countingForm.js"></script>
+    <script src="/guild/statsChannelsForm.js"></script>
   </body>
 </html>

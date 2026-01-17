@@ -140,6 +140,277 @@ setInterval(() => {
 }, 60 * 1000); // Toutes les minutes
 
 
+// ===== STATS CHANNELS UPDATE =====
+// Met à jour les noms des salons de statistiques toutes les 5 minutes
+async function updateStatsChannels() {
+  try {
+    const statsChannels = await db.allAsync(`SELECT * FROM stats_channels`);
+    
+    for (const config of statsChannels) {
+      const guild = client.guilds.cache.get(config.guild_id);
+      if (!guild) continue;
+      
+      const channel = guild.channels.cache.get(config.channel_id);
+      if (!channel) continue;
+      
+      let statValue;
+      
+      switch (config.stat_type) {
+        case "members":
+          // Total des membres
+          statValue = guild.memberCount;
+          break;
+          
+        case "humans":
+          // Membres sans les bots
+          await guild.members.fetch();
+          statValue = guild.members.cache.filter(m => !m.user.bot).size;
+          break;
+          
+        case "bots":
+          // Nombre de bots
+          await guild.members.fetch();
+          statValue = guild.members.cache.filter(m => m.user.bot).size;
+          break;
+          
+        case "online":
+          // Membres en ligne (online, idle, dnd)
+          await guild.members.fetch({ withPresences: true });
+          statValue = guild.members.cache.filter(m => 
+            m.presence && ["online", "idle", "dnd"].includes(m.presence.status)
+          ).size;
+          break;
+          
+        case "voice":
+          // Membres en vocal
+          statValue = guild.members.cache.filter(m => m.voice.channelId).size;
+          break;
+          
+        case "roles":
+          // Nombre de rôles
+          statValue = guild.roles.cache.size;
+          break;
+          
+        case "channels":
+          // Nombre de salons
+          statValue = guild.channels.cache.size;
+          break;
+          
+        case "boosts":
+          // Nombre de boosts
+          statValue = guild.premiumSubscriptionCount || 0;
+          break;
+          
+        case "boost_level":
+          // Niveau de boost
+          statValue = guild.premiumTier;
+          break;
+          
+        case "role_members":
+          // Membres ayant un rôle spécifique
+          if (config.role_id) {
+            await guild.members.fetch();
+            const role = guild.roles.cache.get(config.role_id);
+            statValue = role ? role.members.size : 0;
+          } else {
+            statValue = 0;
+          }
+          break;
+          
+        default:
+          statValue = "?";
+      }
+      
+      // Construire le nouveau nom
+      const newName = config.format.replace("{stat}", statValue);
+      
+      // Ne mettre à jour que si le nom a changé
+      if (channel.name !== newName) {
+        try {
+          await channel.setName(newName);
+        } catch (err) {
+          console.error(`Erreur lors de la mise à jour du salon ${config.channel_id}:`, err.message);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Erreur updateStatsChannels:", err);
+  }
+}
+
+// Met à jour uniquement les stats d'un type spécifique pour un serveur
+async function updateGuildStats(guildId, statTypes) {
+  try {
+    const statsChannels = await db.allAsync(
+      `SELECT * FROM stats_channels WHERE guild_id = ? AND stat_type IN (${statTypes.map(() => '?').join(',')})`,
+      [guildId, ...statTypes]
+    );
+    
+    const guild = client.guilds.cache.get(guildId);
+    if (!guild) return;
+    
+    for (const config of statsChannels) {
+      const channel = guild.channels.cache.get(config.channel_id);
+      if (!channel) continue;
+      
+      let statValue;
+      
+      switch (config.stat_type) {
+        case "members":
+          statValue = guild.memberCount;
+          break;
+        case "humans":
+          statValue = guild.members.cache.filter(m => !m.user.bot).size;
+          break;
+        case "bots":
+          statValue = guild.members.cache.filter(m => m.user.bot).size;
+          break;
+        case "online":
+          statValue = guild.members.cache.filter(m => 
+            m.presence && ["online", "idle", "dnd"].includes(m.presence.status)
+          ).size;
+          break;
+        case "voice":
+          statValue = guild.members.cache.filter(m => m.voice.channelId).size;
+          break;
+        case "roles":
+          statValue = guild.roles.cache.size;
+          break;
+        case "channels":
+          statValue = guild.channels.cache.size;
+          break;
+        case "boosts":
+          statValue = guild.premiumSubscriptionCount || 0;
+          break;
+        case "boost_level":
+          statValue = guild.premiumTier;
+          break;
+        case "role_members":
+          if (config.role_id) {
+            const role = guild.roles.cache.get(config.role_id);
+            statValue = role ? role.members.size : 0;
+          } else {
+            statValue = 0;
+          }
+          break;
+        default:
+          statValue = "?";
+      }
+      
+      const newName = config.format.replace("{stat}", statValue);
+      
+      if (channel.name !== newName) {
+        try {
+          await channel.setName(newName);
+        } catch (err) {
+          console.error(`Erreur mise à jour salon ${config.channel_id}:`, err.message);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Erreur updateGuildStats:", err);
+  }
+}
+
+// Debounce pour éviter le rate limiting (Discord limite le renommage de salon à 2 fois par 10 minutes)
+const statsDebounceTimers = new Map();
+function debounceStatsUpdate(guildId, statTypes, delay = 10000) {
+  const key = `${guildId}-${statTypes.sort().join(",")}`;
+  
+  if (statsDebounceTimers.has(key)) {
+    clearTimeout(statsDebounceTimers.get(key));
+  }
+  
+  statsDebounceTimers.set(key, setTimeout(() => {
+    updateGuildStats(guildId, statTypes);
+    statsDebounceTimers.delete(key);
+  }, delay));
+}
+
+// ===== ÉVÉNEMENTS POUR LES STATS =====
+
+// Membre rejoint/quitte -> members, humans, bots
+client.on("guildMemberAdd", (member) => {
+  const types = ["members", "humans"];
+  if (member.user.bot) types.push("bots");
+  debounceStatsUpdate(member.guild.id, types);
+});
+
+client.on("guildMemberRemove", (member) => {
+  const types = ["members", "humans"];
+  if (member.user.bot) types.push("bots");
+  debounceStatsUpdate(member.guild.id, types);
+});
+
+// Changement de présence -> online
+client.on("presenceUpdate", (oldPresence, newPresence) => {
+  if (!newPresence || !newPresence.guild) return;
+  const wasOnline = oldPresence && ["online", "idle", "dnd"].includes(oldPresence.status);
+  const isOnline = ["online", "idle", "dnd"].includes(newPresence.status);
+  if (wasOnline !== isOnline) {
+    debounceStatsUpdate(newPresence.guild.id, ["online"]);
+  }
+});
+
+// Changement vocal -> voice (géré dans voiceStateUpdate.js mais on ajoute ici pour les stats)
+client.on("voiceStateUpdate", (oldState, newState) => {
+  const guildId = newState.guild?.id || oldState.guild?.id;
+  if (!guildId) return;
+  // Si rejoint ou quitte un vocal
+  if (oldState.channelId !== newState.channelId) {
+    debounceStatsUpdate(guildId, ["voice"]);
+  }
+});
+
+// Rôle créé/supprimé -> roles
+client.on("roleCreate", (role) => {
+  debounceStatsUpdate(role.guild.id, ["roles"]);
+});
+
+client.on("roleDelete", (role) => {
+  debounceStatsUpdate(role.guild.id, ["roles"]);
+});
+
+// Salon créé/supprimé -> channels
+client.on("channelCreate", (channel) => {
+  if (channel.guild) debounceStatsUpdate(channel.guild.id, ["channels"]);
+});
+
+client.on("channelDelete", (channel) => {
+  if (channel.guild) debounceStatsUpdate(channel.guild.id, ["channels"]);
+});
+
+// Mise à jour du serveur -> boosts, boost_level
+client.on("guildUpdate", (oldGuild, newGuild) => {
+  const types = [];
+  if (oldGuild.premiumSubscriptionCount !== newGuild.premiumSubscriptionCount) {
+    types.push("boosts");
+  }
+  if (oldGuild.premiumTier !== newGuild.premiumTier) {
+    types.push("boost_level");
+  }
+  if (types.length > 0) {
+    debounceStatsUpdate(newGuild.id, types);
+  }
+});
+
+// Mise à jour membre (rôle ajouté/retiré) -> role_members
+client.on("guildMemberUpdate", (oldMember, newMember) => {
+  const oldRoles = oldMember.roles.cache;
+  const newRoles = newMember.roles.cache;
+  if (oldRoles.size !== newRoles.size || !oldRoles.every((r, id) => newRoles.has(id))) {
+    debounceStatsUpdate(newMember.guild.id, ["role_members"]);
+  }
+});
+
+// Au démarrage du bot -> toutes les stats
+client.once("clientReady", async () => {
+  console.log("📊 Mise à jour initiale des salons de statistiques...");
+  await updateStatsChannels();
+});
+
+
 client.login(process.env.BOT_TOKEN);
 
 module.exports = client;
+module.exports.updateGuildStats = updateGuildStats;

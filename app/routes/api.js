@@ -890,5 +890,80 @@ module.exports = (app, db, client) => {
     );
   });
 
+  // ===== STATS CHANNELS =====
+  router.get("/bot/get-stats-channels/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    db.all(
+      "SELECT id, channel_id, stat_type, role_id, format FROM stats_channels WHERE guild_id = ?",
+      [guildId],
+      (err, rows) => {
+        if (err) {
+          console.error(err);
+          return res.json([]);
+        }
+        res.json(rows || []);
+      }
+    );
+  });
+
+  router.post("/bot/add-stats-channel", express.json(), (req, res) => {
+    const { guildId, channelId, statType, roleId, format } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
+
+    db.run(
+      `INSERT INTO stats_channels (guild_id, channel_id, stat_type, role_id, format)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(guild_id, channel_id) DO UPDATE SET
+         stat_type = ?, role_id = ?, format = ?`,
+      [guildId, channelId, statType, roleId || null, format || '{stat}', statType, roleId || null, format || '{stat}'],
+      async function(err) {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        
+        // Mettre à jour le salon immédiatement
+        try {
+          const client = require("../bot");
+          if (client.updateGuildStats) {
+            await client.updateGuildStats(guildId, [statType]);
+          }
+        } catch (e) {
+          console.error("Erreur mise à jour stats:", e);
+        }
+        
+        res.json({ success: true, id: this.lastID });
+      }
+    );
+  });
+
+  router.delete("/bot/delete-stats-channel/:id", (req, res) => {
+    const { id } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    db.run("DELETE FROM stats_channels WHERE id = ?", [id], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+      }
+      res.json({ success: true });
+    });
+  });
+
   app.use("/api", router);
 };
