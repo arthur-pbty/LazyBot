@@ -291,7 +291,12 @@
         <input type="number" id="economy-starting-balance" min="0" value="0" />
       </label>
 
-      <h3>📅 Récompense quotidienne</h3>
+      <h3>📅 Récompense quotidienne (daily)</h3>
+      <label>
+        <input type="checkbox" id="economy-daily-enabled" checked />
+        Activer la commande daily
+      </label>
+
       <label>
         Montant quotidien :
         <br />
@@ -304,7 +309,12 @@
         <input type="number" id="economy-daily-cooldown" min="1" value="24" />
       </label>
 
-      <h3>💼 Travail</h3>
+      <h3>💼 Travail (work)</h3>
+      <label>
+        <input type="checkbox" id="economy-work-enabled" checked />
+        Activer la commande work
+      </label>
+
       <label>
         Gain minimum :
         <br />
@@ -324,6 +334,11 @@
       </label>
 
       <h3>🔫 Crime</h3>
+      <label>
+        <input type="checkbox" id="economy-crime-enabled" checked />
+        Activer la commande crime
+      </label>
+
       <label>
         Gain minimum :
         <br />
@@ -352,6 +367,78 @@
         Cooldown (minutes) :
         <br />
         <input type="number" id="economy-crime-cooldown" min="1" value="120" />
+      </label>
+
+      <h3>🕵️ Vol (steal)</h3>
+      <label>
+        <input type="checkbox" id="economy-steal-enabled" checked />
+        Activer la commande steal (voler d'autres joueurs)
+      </label>
+
+      <label>
+        Taux de réussite (%) :
+        <br />
+        <input type="number" id="economy-steal-success" min="1" max="100" value="40" />
+      </label>
+
+      <label>
+        % maximum du portefeuille volable :
+        <br />
+        <input type="number" id="economy-steal-max-percent" min="1" max="100" value="50" />
+      </label>
+
+      <label>
+        Amende en cas d'échec (% de votre solde, donné à la victime) :
+        <br />
+        <input type="number" id="economy-steal-fine" min="0" max="100" value="25" />
+      </label>
+
+      <label>
+        Cooldown (minutes) :
+        <br />
+        <input type="number" id="economy-steal-cooldown" min="1" value="180" />
+      </label>
+
+      <h3>💬 Argent par message</h3>
+      <label>
+        <input type="checkbox" id="economy-message-money-enabled" />
+        Gagner de l'argent en envoyant des messages
+      </label>
+
+      <label>
+        Gain par message :
+        <br />
+        Entre
+        <input type="number" id="economy-message-money-min" min="1" value="1" />
+        et
+        <input type="number" id="economy-message-money-max" min="1" value="5" />
+      </label>
+
+      <label>
+        Cooldown (secondes) :
+        <br />
+        <input type="number" id="economy-message-money-cooldown" min="1" value="60" />
+      </label>
+
+      <h3>🎤 Argent en vocal</h3>
+      <label>
+        <input type="checkbox" id="economy-voice-money-enabled" />
+        Gagner de l'argent en étant en vocal
+      </label>
+
+      <label>
+        Gain par intervalle :
+        <br />
+        Entre
+        <input type="number" id="economy-voice-money-min" min="1" value="5" />
+        et
+        <input type="number" id="economy-voice-money-max" min="1" value="15" />
+      </label>
+
+      <label>
+        Intervalle de gain (minutes) :
+        <br />
+        <input type="number" id="economy-voice-money-interval" min="1" value="5" />
       </label>
 
       <button type="submit">Sauvegarder</button>

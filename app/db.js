@@ -99,16 +99,32 @@ db.exec(`
     enabled INTEGER NOT NULL DEFAULT 0,
     currency_name TEXT NOT NULL DEFAULT 'coins',
     currency_symbol TEXT NOT NULL DEFAULT '💰',
+    daily_enabled INTEGER NOT NULL DEFAULT 1,
     daily_amount INTEGER NOT NULL DEFAULT 100,
     daily_cooldown_hours INTEGER NOT NULL DEFAULT 24,
+    work_enabled INTEGER NOT NULL DEFAULT 1,
     work_min_amount INTEGER NOT NULL DEFAULT 50,
     work_max_amount INTEGER NOT NULL DEFAULT 150,
     work_cooldown_minutes INTEGER NOT NULL DEFAULT 60,
+    crime_enabled INTEGER NOT NULL DEFAULT 1,
     crime_min_amount INTEGER NOT NULL DEFAULT 100,
     crime_max_amount INTEGER NOT NULL DEFAULT 500,
     crime_success_rate INTEGER NOT NULL DEFAULT 50,
     crime_fine_percent INTEGER NOT NULL DEFAULT 30,
     crime_cooldown_minutes INTEGER NOT NULL DEFAULT 120,
+    steal_enabled INTEGER NOT NULL DEFAULT 1,
+    steal_success_rate INTEGER NOT NULL DEFAULT 40,
+    steal_max_percent INTEGER NOT NULL DEFAULT 50,
+    steal_fine_percent INTEGER NOT NULL DEFAULT 25,
+    steal_cooldown_minutes INTEGER NOT NULL DEFAULT 180,
+    message_money_enabled INTEGER NOT NULL DEFAULT 0,
+    message_money_min INTEGER NOT NULL DEFAULT 1,
+    message_money_max INTEGER NOT NULL DEFAULT 5,
+    message_money_cooldown_seconds INTEGER NOT NULL DEFAULT 60,
+    voice_money_enabled INTEGER NOT NULL DEFAULT 0,
+    voice_money_min INTEGER NOT NULL DEFAULT 5,
+    voice_money_max INTEGER NOT NULL DEFAULT 15,
+    voice_money_interval_minutes INTEGER NOT NULL DEFAULT 5,
     starting_balance INTEGER NOT NULL DEFAULT 0
   );
 
@@ -120,6 +136,8 @@ db.exec(`
     last_daily_timestamp INTEGER,
     last_work_timestamp INTEGER,
     last_crime_timestamp INTEGER,
+    last_steal_timestamp INTEGER,
+    last_message_money_timestamp INTEGER,
     PRIMARY KEY (guild_id, user_id)
   );
 

@@ -29,11 +29,11 @@ module.exports = addCommand({
   guildCondition: async (guildId) => {
     return new Promise((resolve) => {
       db.get(
-        "SELECT enabled FROM economy_config WHERE guild_id = ?",
+        "SELECT enabled, work_enabled FROM economy_config WHERE guild_id = ?",
         [guildId],
         (err, row) => {
           if (err) return resolve(false);
-          resolve(!!row?.enabled);
+          resolve(!!row?.enabled && !!row?.work_enabled);
         }
       );
     });

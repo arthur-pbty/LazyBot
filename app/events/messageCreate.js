@@ -7,7 +7,8 @@ module.exports = {
     if (message.author.bot) return;
     
     const guildId = message.guild.id;
-  
+
+    // ===== XP SYSTEM =====
     db.get(
       `SELECT 
         enabled,
@@ -34,28 +35,28 @@ module.exports = {
           const userRoles = message.member.roles.cache;
           const requiredRoles = JSON.parse(row.role_with_without_xp || "[]");
           if (!requiredRoles.some(roleId => userRoles.has(roleId))) {
-            return; // User has an excluded role
+            return;
           }
         } else if (row.role_with_without_type === "without") {
           const userRoles = message.member.roles.cache;
           const excludedRoles = JSON.parse(row.role_with_without_xp || "[]");
           if (excludedRoles.some(roleId => userRoles.has(roleId))) {
-            return; // User does not have any of the required roles
+            return;
           }
         } else if (row.salon_with_without_type === "with") {
           const channelId = message.channel.id;
           const requiredChannels = JSON.parse(row.salon_with_without_xp || "[]");
           if (!requiredChannels.includes(channelId)) {
-            return; // Message not in a required channel
+            return;
           }
         } else if (row.salon_with_without_type === "without") {
           const channelId = message.channel.id;
           const excludedChannels = JSON.parse(row.salon_with_without_xp || "[]");
           if (excludedChannels.includes(channelId)) {
-            return; // Message in an excluded channel
+            return;
           }
         }
-        // Logic to award XP for message goes here
+        
         const now = Date.now();
         db.get(
           `SELECT xp, level, last_xp_message_timestamp FROM user_levels WHERE guild_id = ? AND user_id = ?`,
@@ -65,7 +66,7 @@ module.exports = {
             
             const lastTimestamp = userRow ? userRow.last_xp_message_timestamp || 0 : 0;
             if (now - lastTimestamp < row.cooldown_xp_message_seconds * 1000) {
-              return; // Still in cooldown
+              return;
             }
   
             const minXp = row.gain_xp_message_lower_bound;
@@ -83,7 +84,6 @@ module.exports = {
               newLevel = 1;
             }
             
-            // Level up logic based on xp_courbe_type and multiplier goes here
             const multiplier = row.multiplier_courbe_for_level;
             let fonction_courbe;
             
@@ -103,10 +103,8 @@ module.exports = {
               newLevel += 1;
               xpForNextLevel = fonction_courbe(newLevel);
   
-              // Announce level up if enabled and meets the criteria
               if (row.level_announcements_enabled && (newLevel % row.level_annoncement_every_level === 0)) {
                 const channel = message.guild.channels.cache.get(row.level_announcements_channel_id);
-                console.log("Channel for level announcement:", channel);
                 if (channel) {
                   let announcementMsg = row.level_announcements_message;
                   announcementMsg = announcementMsg
@@ -127,6 +125,44 @@ module.exports = {
                   level = excluded.level,
                   last_xp_message_timestamp = excluded.last_xp_message_timestamp`,
               [guildId, message.author.id, newXp, newLevel, now]
+            );
+          }
+        );
+      }
+    );
+
+    // ===== ECONOMY MESSAGE MONEY =====
+    db.get(
+      `SELECT enabled, message_money_enabled, message_money_min, message_money_max, message_money_cooldown_seconds
+       FROM economy_config WHERE guild_id = ?`,
+      [guildId],
+      (err, ecoRow) => {
+        if (err || !ecoRow || !ecoRow.enabled || !ecoRow.message_money_enabled) return;
+
+        const now = Date.now();
+        db.get(
+          `SELECT balance, last_message_money_timestamp FROM user_economy WHERE guild_id = ? AND user_id = ?`,
+          [guildId, message.author.id],
+          (err, userEcoRow) => {
+            if (err) return;
+
+            const lastTimestamp = userEcoRow?.last_message_money_timestamp || 0;
+            if (now - lastTimestamp < ecoRow.message_money_cooldown_seconds * 1000) {
+              return; // Still in cooldown
+            }
+
+            const minMoney = ecoRow.message_money_min;
+            const maxMoney = ecoRow.message_money_max;
+            const moneyToAdd = Math.floor(Math.random() * (maxMoney - minMoney + 1)) + minMoney;
+            const newBalance = (userEcoRow?.balance || 0) + moneyToAdd;
+
+            db.run(
+              `INSERT INTO user_economy (guild_id, user_id, balance, bank, last_message_money_timestamp)
+               VALUES (?, ?, ?, 0, ?)
+               ON CONFLICT(guild_id, user_id) DO UPDATE SET
+                 balance = ?,
+                 last_message_money_timestamp = ?`,
+              [guildId, message.author.id, newBalance, now, newBalance, now]
             );
           }
         );
