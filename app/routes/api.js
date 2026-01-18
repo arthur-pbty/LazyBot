@@ -1215,5 +1215,71 @@ module.exports = (app, db, client) => {
     }
   });
 
+  // ===== BOT APPEARANCE =====
+
+  // Obtenir les infos d'apparence du bot
+  router.get("/bot/get-bot-appearance/:guildId", async (req, res) => {
+    const { guildId } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        return res.status(404).json({ success: false, error: "Serveur non trouvé" });
+      }
+
+      const botMember = guild.members.me;
+      const bot = client.user;
+
+      res.json({
+        success: true,
+        username: bot.username,
+        nickname: botMember?.nickname || null,
+        avatarUrl: bot.displayAvatarURL({ size: 256 }),
+        discriminator: bot.discriminator
+      });
+
+    } catch (err) {
+      console.error("Erreur get bot appearance:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Changer le pseudo du bot sur un serveur
+  router.post("/bot/set-nickname", express.json(), async (req, res) => {
+    const { guildId, nickname } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        return res.status(404).json({ success: false, error: "Serveur non trouvé" });
+      }
+
+      const botMember = guild.members.me;
+      await botMember.setNickname(nickname || null);
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur set nickname:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use("/api", router);
 };

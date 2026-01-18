@@ -70,6 +70,10 @@
             <span class="nav-item-icon">✉️</span>
             Envoyer un message
           </a>
+          <a class="nav-item" data-section="botappearance">
+            <span class="nav-item-icon">🤖</span>
+            Apparence du bot
+          </a>
         </div>
       </nav>
       
@@ -1062,6 +1066,53 @@
           </div>
         </section>
 
+        <!-- Section: Apparence du bot -->
+        <section class="config-section" id="section-botappearance">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div>
+                <h2 class="config-card-title">🤖 Apparence du bot</h2>
+                <p class="config-card-subtitle">Personnalisez le pseudo du bot sur ce serveur</p>
+              </div>
+            </div>
+            <div class="config-card-body">
+
+              <!-- Aperçu actuel -->
+              <div class="form-group">
+                <label class="form-label">👁️ Aperçu actuel</label>
+                <div class="bot-preview-card" id="bot-preview">
+                  <img id="bot-preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                  <div class="bot-preview-info">
+                    <div class="bot-preview-name" id="bot-preview-name">Chargement...</div>
+                    <div class="bot-preview-tag">BOT</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pseudo sur le serveur -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">📝 Pseudo sur ce serveur</h4>
+                <p class="text-muted" style="margin-bottom: 1rem;">Le pseudo du bot sera visible uniquement sur ce serveur.</p>
+                
+                <div class="form-group">
+                  <label class="form-label">Nouveau pseudo</label>
+                  <input type="text" class="form-input" id="bot-nickname" placeholder="Laissez vide pour utiliser le nom par défaut" maxlength="32">
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-primary" id="bot-nickname-save">
+                    💾 Sauvegarder le pseudo
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="bot-nickname-reset">
+                    🔄 Réinitialiser
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -1081,5 +1132,6 @@
     <script src="/guild/statsChannelsForm.js"></script>
     <script src="/guild/scheduledMessagesForm.js"></script>
     <script src="/guild/sendMessageForm.js"></script>
+    <script src="/guild/botAppearanceForm.js"></script>
   </body>
 </html>
