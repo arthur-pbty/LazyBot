@@ -1,7 +1,8 @@
-const { Events, EmbedBuilder } = require("discord.js");
+const { Events, EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const db = require("../db");
 const { sendLog } = require("../fonctions/sendLog");
 const antiraid = require("../fonctions/antiraid");
+const { generateWelcomeImage } = require("../fonctions/generateWelcomeImage");
 
 module.exports = {
   name: Events.GuildMemberAdd,
@@ -32,46 +33,133 @@ module.exports = {
     });
 
     // ===== MESSAGE DE BIENVENUE =====
-    db.get(
-      "SELECT enabled, channel_id, message FROM welcome_config WHERE guild_id = ?",
-      [member.guild.id],
-      (err, row) => {
-        if (err || !row || !row.enabled) return;
+    try {
+      const row = await db.getAsync(
+        `SELECT enabled, channel_id, message, message_type, 
+                embed_title, embed_description, embed_color, embed_thumbnail, embed_footer,
+                image_enabled, image_gradient, image_title, image_subtitle, image_show_member_count 
+         FROM welcome_config WHERE guild_id = ?`,
+        [member.guild.id]
+      );
 
-        let msg = row.message || "Bienvenue {mention} sur {server} !";
+      if (!row || !row.enabled) return processAutorole();
 
-        msg = msg
-          .replace("{user}", member.user.username)
-          .replace("{mention}", `<@${member.id}>`)
-          .replace("{server}", member.guild.name);
+      const channel = member.guild.channels.cache.get(row.channel_id);
+      if (!channel) return processAutorole();
 
-        const channel = member.guild.channels.cache.get(row.channel_id);
-        if (channel) {
-          const embed = new EmbedBuilder()
-            .setColor(0x57F287)
-            .setTitle("👋 Bienvenue !")
-            .setDescription(msg)
-            .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-            .setFooter({ text: member.guild.name, iconURL: member.guild.iconURL({ dynamic: true }) })
-            .setTimestamp();
+      // Variables de remplacement
+      const replaceVariables = (text) => {
+        if (!text) return text;
+        return text
+          .replace(/{user}/g, member.user.username)
+          .replace(/{mention}/g, `<@${member.id}>`)
+          .replace(/{server}/g, member.guild.name)
+          .replace(/{membercount}/g, member.guild.memberCount.toString())
+          .replace(/{userid}/g, member.id);
+      };
 
-          channel.send({ embeds: [embed] });
+      const messagePayload = { };
+
+      // Message texte simple
+      if (row.message_type === 'text' || row.message_type === 'both') {
+        const textMsg = replaceVariables(row.message || "Bienvenue {mention} sur {server} !");
+        messagePayload.content = textMsg;
+      }
+
+      // Embed
+      if (row.message_type === 'embed' || row.message_type === 'both') {
+        const embed = new EmbedBuilder()
+          .setColor(row.embed_color || '#57F287')
+          .setTimestamp();
+
+        if (row.embed_title) {
+          embed.setTitle(replaceVariables(row.embed_title));
+        } else {
+          embed.setTitle('👋 Bienvenue !');
+        }
+
+        if (row.embed_description) {
+          embed.setDescription(replaceVariables(row.embed_description));
+        } else if (row.message) {
+          embed.setDescription(replaceVariables(row.message));
+        } else {
+          embed.setDescription(`Bienvenue ${member} sur **${member.guild.name}** !`);
+        }
+
+        if (row.embed_thumbnail) {
+          embed.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }));
+        }
+
+        if (row.embed_footer) {
+          embed.setFooter({ 
+            text: replaceVariables(row.embed_footer), 
+            iconURL: member.guild.iconURL({ dynamic: true }) 
+          });
+        } else {
+          embed.setFooter({ 
+            text: member.guild.name, 
+            iconURL: member.guild.iconURL({ dynamic: true }) 
+          });
+        }
+
+        messagePayload.embeds = [embed];
+      }
+
+      // Image générée
+      if (row.image_enabled) {
+        try {
+          const imageBuffer = await generateWelcomeImage({
+            type: 'welcome',
+            username: member.user.username,
+            discriminator: member.user.discriminator,
+            avatarURL: member.user.displayAvatarURL({ extension: 'png', size: 256 }),
+            serverName: member.guild.name,
+            memberCount: row.image_show_member_count ? member.guild.memberCount : null,
+            gradient: row.image_gradient || 'purple',
+            title: row.image_title ? replaceVariables(row.image_title) : null,
+            subtitle: row.image_subtitle ? replaceVariables(row.image_subtitle) : null
+          });
+
+          const attachment = new AttachmentBuilder(imageBuffer, { name: 'welcome.png' });
+          messagePayload.files = [attachment];
+
+          // Si on a un embed, mettre l'image dans l'embed
+          if (messagePayload.embeds && messagePayload.embeds.length > 0) {
+            messagePayload.embeds[0].setImage('attachment://welcome.png');
+          }
+        } catch (imgErr) {
+          console.error('Erreur génération image bienvenue:', imgErr);
         }
       }
-    );
+
+      // Envoyer le message si on a quelque chose à envoyer
+      if (messagePayload.content || messagePayload.embeds || messagePayload.files) {
+        await channel.send(messagePayload);
+      }
+
+    } catch (err) {
+      console.error('Erreur message bienvenue:', err);
+    }
 
     // ===== AUTOROLE =====
-    db.get(
-      "SELECT enabled, role_id FROM autorole_newuser_config WHERE guild_id = ?",
-      [member.guild.id],
-      (err, row) => {
-        if (err || !row || !row.enabled) return;
+    async function processAutorole() {
+      try {
+        const row = await db.getAsync(
+          "SELECT enabled, role_id FROM autorole_newuser_config WHERE guild_id = ?",
+          [member.guild.id]
+        );
+
+        if (!row || !row.enabled) return;
 
         const role = member.guild.roles.cache.get(row.role_id);
         if (role) {
-          member.roles.add(role);
+          await member.roles.add(role);
         }
+      } catch (err) {
+        console.error('Erreur autorole:', err);
       }
-    );
+    }
+
+    processAutorole();
   },
 };

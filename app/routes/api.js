@@ -46,7 +46,11 @@ module.exports = (app, db, client) => {
 
   // API pour sauvegarder la configuration de bienvenue
   router.post("/bot/save-welcome-config", express.json(), (req, res) => {
-    const { guildId, channelId, welcomeEnabled, welcomeMessage } = req.body;
+    const { 
+      guildId, channelId, welcomeEnabled, welcomeMessage,
+      messageType, embedTitle, embedDescription, embedColor, embedThumbnail, embedFooter,
+      imageEnabled, imageGradient, imageTitle, imageSubtitle, imageShowMemberCount
+    } = req.body;
 
     if (!req.session.guilds) {
       return res.status(401).json({ success: false });
@@ -62,19 +66,26 @@ module.exports = (app, db, client) => {
 
     db.run(
       `
-      INSERT INTO welcome_config (guild_id, channel_id, enabled, message)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO welcome_config (
+        guild_id, channel_id, enabled, message, message_type,
+        embed_title, embed_description, embed_color, embed_thumbnail, embed_footer,
+        image_enabled, image_gradient, image_title, image_subtitle, image_show_member_count
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(guild_id)
-      DO UPDATE SET channel_id = ?, enabled = ?, message = ?
+      DO UPDATE SET 
+        channel_id = ?, enabled = ?, message = ?, message_type = ?,
+        embed_title = ?, embed_description = ?, embed_color = ?, embed_thumbnail = ?, embed_footer = ?,
+        image_enabled = ?, image_gradient = ?, image_title = ?, image_subtitle = ?, image_show_member_count = ?
       `,
       [
-        guildId,
-        channelId,
-        welcomeEnabled ? 1 : 0,
-        welcomeMessage,
-        channelId,
-        welcomeEnabled ? 1 : 0,
-        welcomeMessage
+        guildId, channelId, welcomeEnabled ? 1 : 0, welcomeMessage, messageType || 'embed',
+        embedTitle || null, embedDescription || null, embedColor || '#57F287', embedThumbnail ? 1 : 0, embedFooter || null,
+        imageEnabled ? 1 : 0, imageGradient || 'purple', imageTitle || null, imageSubtitle || null, imageShowMemberCount ? 1 : 0,
+        // UPDATE values
+        channelId, welcomeEnabled ? 1 : 0, welcomeMessage, messageType || 'embed',
+        embedTitle || null, embedDescription || null, embedColor || '#57F287', embedThumbnail ? 1 : 0, embedFooter || null,
+        imageEnabled ? 1 : 0, imageGradient || 'purple', imageTitle || null, imageSubtitle || null, imageShowMemberCount ? 1 : 0
       ],
       err => {
         if (err) {
@@ -91,16 +102,45 @@ module.exports = (app, db, client) => {
     const { guildId } = req.params;
 
     db.get(
-      "SELECT enabled, channel_id, message FROM welcome_config WHERE guild_id = ?",
+      `SELECT enabled, channel_id, message, message_type, 
+              embed_title, embed_description, embed_color, embed_thumbnail, embed_footer,
+              image_enabled, image_gradient, image_title, image_subtitle, image_show_member_count 
+       FROM welcome_config WHERE guild_id = ?`,
       [guildId],
       (err, row) => {
         if (err || !row) {
-          return res.json({ enabled: false, channelId: null, message: "" });
+          return res.json({ 
+            enabled: false, 
+            channelId: null, 
+            message: "",
+            messageType: "embed",
+            embedTitle: "",
+            embedDescription: "",
+            embedColor: "#57F287",
+            embedThumbnail: true,
+            embedFooter: "",
+            imageEnabled: false,
+            imageGradient: "purple",
+            imageTitle: "",
+            imageSubtitle: "",
+            imageShowMemberCount: true
+          });
         }
         res.json({
           enabled: !!row.enabled,
           channelId: row.channel_id,
-          message: row.message
+          message: row.message || "",
+          messageType: row.message_type || "embed",
+          embedTitle: row.embed_title || "",
+          embedDescription: row.embed_description || "",
+          embedColor: row.embed_color || "#57F287",
+          embedThumbnail: !!row.embed_thumbnail,
+          embedFooter: row.embed_footer || "",
+          imageEnabled: !!row.image_enabled,
+          imageGradient: row.image_gradient || "purple",
+          imageTitle: row.image_title || "",
+          imageSubtitle: row.image_subtitle || "",
+          imageShowMemberCount: row.image_show_member_count !== 0
         });
       }
     );
@@ -108,7 +148,11 @@ module.exports = (app, db, client) => {
 
 
   router.post("/bot/save-goodbye-config", express.json(), (req, res) => {
-    const { guildId, channelId, goodbyeEnabled, goodbyeMessage } = req.body;
+    const { 
+      guildId, channelId, goodbyeEnabled, goodbyeMessage,
+      messageType, embedTitle, embedDescription, embedColor, embedThumbnail, embedFooter,
+      imageEnabled, imageGradient, imageTitle, imageSubtitle, imageShowMemberCount
+    } = req.body;
 
     if (!req.session.guilds) {
       return res.status(401).json({ success: false });
@@ -124,19 +168,26 @@ module.exports = (app, db, client) => {
 
     db.run(
       `
-      INSERT INTO goodbye_config (guild_id, channel_id, enabled, message)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO goodbye_config (
+        guild_id, channel_id, enabled, message, message_type,
+        embed_title, embed_description, embed_color, embed_thumbnail, embed_footer,
+        image_enabled, image_gradient, image_title, image_subtitle, image_show_member_count
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(guild_id)
-      DO UPDATE SET channel_id = ?, enabled = ?, message = ?
+      DO UPDATE SET 
+        channel_id = ?, enabled = ?, message = ?, message_type = ?,
+        embed_title = ?, embed_description = ?, embed_color = ?, embed_thumbnail = ?, embed_footer = ?,
+        image_enabled = ?, image_gradient = ?, image_title = ?, image_subtitle = ?, image_show_member_count = ?
       `,
       [
-        guildId,
-        channelId,
-        goodbyeEnabled ? 1 : 0,
-        goodbyeMessage,
-        channelId,
-        goodbyeEnabled ? 1 : 0,
-        goodbyeMessage
+        guildId, channelId, goodbyeEnabled ? 1 : 0, goodbyeMessage, messageType || 'embed',
+        embedTitle || null, embedDescription || null, embedColor || '#ED4245', embedThumbnail ? 1 : 0, embedFooter || null,
+        imageEnabled ? 1 : 0, imageGradient || 'red', imageTitle || null, imageSubtitle || null, imageShowMemberCount ? 1 : 0,
+        // UPDATE values
+        channelId, goodbyeEnabled ? 1 : 0, goodbyeMessage, messageType || 'embed',
+        embedTitle || null, embedDescription || null, embedColor || '#ED4245', embedThumbnail ? 1 : 0, embedFooter || null,
+        imageEnabled ? 1 : 0, imageGradient || 'red', imageTitle || null, imageSubtitle || null, imageShowMemberCount ? 1 : 0
       ],
       err => {
         if (err) {
@@ -153,16 +204,45 @@ module.exports = (app, db, client) => {
     const { guildId } = req.params;
 
     db.get(
-      "SELECT enabled, channel_id, message FROM goodbye_config WHERE guild_id = ?",
+      `SELECT enabled, channel_id, message, message_type, 
+              embed_title, embed_description, embed_color, embed_thumbnail, embed_footer,
+              image_enabled, image_gradient, image_title, image_subtitle, image_show_member_count 
+       FROM goodbye_config WHERE guild_id = ?`,
       [guildId],
       (err, row) => {
         if (err || !row) {
-          return res.json({ enabled: false, channelId: null, message: "" });
+          return res.json({ 
+            enabled: false, 
+            channelId: null, 
+            message: "",
+            messageType: "embed",
+            embedTitle: "",
+            embedDescription: "",
+            embedColor: "#ED4245",
+            embedThumbnail: true,
+            embedFooter: "",
+            imageEnabled: false,
+            imageGradient: "red",
+            imageTitle: "",
+            imageSubtitle: "",
+            imageShowMemberCount: true
+          });
         }
         res.json({
           enabled: !!row.enabled,
           channelId: row.channel_id,
-          message: row.message
+          message: row.message || "",
+          messageType: row.message_type || "embed",
+          embedTitle: row.embed_title || "",
+          embedDescription: row.embed_description || "",
+          embedColor: row.embed_color || "#ED4245",
+          embedThumbnail: !!row.embed_thumbnail,
+          embedFooter: row.embed_footer || "",
+          imageEnabled: !!row.image_enabled,
+          imageGradient: row.image_gradient || "red",
+          imageTitle: row.image_title || "",
+          imageSubtitle: row.image_subtitle || "",
+          imageShowMemberCount: row.image_show_member_count !== 0
         });
       }
     );

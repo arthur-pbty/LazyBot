@@ -24,8 +24,9 @@
       </div>
       
       <nav class="sidebar-nav">
+        <!-- Accueil & Membres -->
         <div class="nav-section">
-          <div class="nav-section-title">Configuration</div>
+          <div class="nav-section-title">👥 Membres</div>
           <a class="nav-item active" data-section="welcome">
             <span class="nav-item-icon">👋</span>
             Bienvenue
@@ -38,10 +39,15 @@
             <span class="nav-item-icon">🎭</span>
             Rôles automatiques
           </a>
+          <a class="nav-item" data-section="rolepanels">
+            <span class="nav-item-icon">🏷️</span>
+            Rôles par boutons
+          </a>
         </div>
         
+        <!-- Progression -->
         <div class="nav-section">
-          <div class="nav-section-title">Systèmes</div>
+          <div class="nav-section-title">🎮 Progression</div>
           <a class="nav-item" data-section="levels">
             <span class="nav-item-icon">📈</span>
             Niveaux
@@ -50,6 +56,11 @@
             <span class="nav-item-icon">💰</span>
             Économie
           </a>
+        </div>
+
+        <!-- Fonctionnalités -->
+        <div class="nav-section">
+          <div class="nav-section-title">⚡ Fonctionnalités</div>
           <a class="nav-item" data-section="privateroom">
             <span class="nav-item-icon">🔊</span>
             Salons temporaires
@@ -62,29 +73,40 @@
             <span class="nav-item-icon">📊</span>
             Salons de stats
           </a>
-          <a class="nav-item" data-section="scheduledmessages">
-            <span class="nav-item-icon">⏰</span>
-            Messages programmés
-          </a>
+        </div>
+
+        <!-- Communication -->
+        <div class="nav-section">
+          <div class="nav-section-title">💬 Communication</div>
           <a class="nav-item" data-section="sendmessage">
             <span class="nav-item-icon">✉️</span>
             Envoyer un message
           </a>
-          <a class="nav-item" data-section="botappearance">
-            <span class="nav-item-icon">🤖</span>
-            Apparence du bot
+          <a class="nav-item" data-section="scheduledmessages">
+            <span class="nav-item-icon">⏰</span>
+            Messages programmés
+          </a>
+        </div>
+
+        <!-- Modération & Sécurité -->
+        <div class="nav-section">
+          <div class="nav-section-title">🛡️ Sécurité</div>
+          <a class="nav-item" data-section="antiraid">
+            <span class="nav-item-icon">⚔️</span>
+            Anti-Raid
           </a>
           <a class="nav-item" data-section="logs">
             <span class="nav-item-icon">📜</span>
             Logs
           </a>
-          <a class="nav-item" data-section="antiraid">
-            <span class="nav-item-icon">🛡️</span>
-            Anti-Raid
-          </a>
-          <a class="nav-item" data-section="rolepanels">
-            <span class="nav-item-icon">🎭</span>
-            Rôles par boutons
+        </div>
+
+        <!-- Personnalisation -->
+        <div class="nav-section">
+          <div class="nav-section-title">🎨 Personnalisation</div>
+          <a class="nav-item" data-section="botappearance">
+            <span class="nav-item-icon">🤖</span>
+            Apparence du bot
           </a>
         </div>
       </nav>
@@ -132,10 +154,123 @@
                 <label class="form-label">Canal de bienvenue</label>
                 <select class="form-select" id="welcome-channel"></select>
               </div>
-              
+
+              <!-- Type de message -->
               <div class="form-group">
-                <label class="form-label">Message</label>
-                <textarea class="form-textarea" id="welcome-message" rows="4" placeholder="Ex: Bienvenue {user} sur {server} 🎉"></textarea>
+                <label class="form-label">Type de message</label>
+                <select class="form-select" id="welcome-message-type">
+                  <option value="text">📝 Texte simple</option>
+                  <option value="embed" selected>📦 Embed</option>
+                  <option value="both">📝📦 Texte + Embed</option>
+                </select>
+              </div>
+
+              <!-- Message texte -->
+              <div class="form-group" id="welcome-text-group">
+                <label class="form-label">Message texte</label>
+                <textarea class="form-textarea" id="welcome-message" rows="3" placeholder="Ex: Bienvenue {mention} sur {server} 🎉"></textarea>
+              </div>
+
+              <!-- Configuration Embed -->
+              <div class="sub-section" id="welcome-embed-section">
+                <h4 class="sub-section-title">📦 Configuration de l'embed</h4>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Titre de l'embed</label>
+                    <input type="text" class="form-input" id="welcome-embed-title" placeholder="👋 Bienvenue !">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Couleur</label>
+                    <input type="color" class="form-input form-color" id="welcome-embed-color" value="#57F287">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Description de l'embed</label>
+                  <textarea class="form-textarea" id="welcome-embed-description" rows="3" placeholder="Bienvenue {mention} sur **{server}** ! 🎉"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Footer (pied de page)</label>
+                  <input type="text" class="form-input" id="welcome-embed-footer" placeholder="Laissez vide pour le nom du serveur">
+                </div>
+
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Afficher l'avatar</span>
+                    <span class="inline-toggle-desc">Afficher l'avatar du membre dans l'embed</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="welcome-embed-thumbnail" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Image générée -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🖼️ Image de bienvenue</h4>
+                
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Générer une image</span>
+                    <span class="inline-toggle-desc">Créer une belle image personnalisée</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="welcome-image-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div id="welcome-image-options" style="display: none;">
+                  <div class="form-group">
+                    <label class="form-label">Style de dégradé</label>
+                    <div class="gradient-picker" id="welcome-gradient-picker">
+                      <div class="gradient-option selected" data-gradient="purple" style="background: linear-gradient(135deg, #667eea, #764ba2);" title="Violet"></div>
+                      <div class="gradient-option" data-gradient="blue" style="background: linear-gradient(135deg, #4facfe, #00f2fe);" title="Bleu"></div>
+                      <div class="gradient-option" data-gradient="green" style="background: linear-gradient(135deg, #11998e, #38ef7d);" title="Vert"></div>
+                      <div class="gradient-option" data-gradient="red" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);" title="Rouge"></div>
+                      <div class="gradient-option" data-gradient="orange" style="background: linear-gradient(135deg, #f12711, #f5af19);" title="Orange"></div>
+                      <div class="gradient-option" data-gradient="pink" style="background: linear-gradient(135deg, #ee0979, #ff6a00);" title="Rose"></div>
+                      <div class="gradient-option" data-gradient="dark" style="background: linear-gradient(135deg, #232526, #414345);" title="Sombre"></div>
+                      <div class="gradient-option" data-gradient="sunset" style="background: linear-gradient(135deg, #fa709a, #fee140);" title="Coucher de soleil"></div>
+                      <div class="gradient-option" data-gradient="ocean" style="background: linear-gradient(135deg, #2193b0, #6dd5ed);" title="Océan"></div>
+                      <div class="gradient-option" data-gradient="forest" style="background: linear-gradient(135deg, #134e5e, #71b280);" title="Forêt"></div>
+                    </div>
+                    <input type="hidden" id="welcome-image-gradient" value="purple">
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Titre personnalisé</label>
+                      <input type="text" class="form-input" id="welcome-image-title" placeholder="Bienvenue">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Sous-titre personnalisé</label>
+                      <input type="text" class="form-input" id="welcome-image-subtitle" placeholder="sur le serveur Discord">
+                    </div>
+                  </div>
+
+                  <div class="inline-toggle">
+                    <div class="inline-toggle-label">
+                      <span class="inline-toggle-title">Afficher le nombre de membres</span>
+                      <span class="inline-toggle-desc">Affiche "Tu es le Xème membre !"</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="welcome-image-member-count" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <!-- Aperçu de l'image -->
+                  <div class="form-group">
+                    <label class="form-label">👁️ Aperçu de l'image</label>
+                    <div class="image-preview" id="welcome-image-preview">
+                      <div class="preview-placeholder">L'aperçu s'affichera ici</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div class="variables-box">
@@ -144,6 +279,7 @@
                   <span class="variable-tag"><code>{user}</code> <span>→ nom</span></span>
                   <span class="variable-tag"><code>{mention}</code> <span>→ mention</span></span>
                   <span class="variable-tag"><code>{server}</code> <span>→ serveur</span></span>
+                  <span class="variable-tag"><code>{membercount}</code> <span>→ nombre de membres</span></span>
                 </div>
               </div>
             </div>
@@ -172,10 +308,123 @@
                 <label class="form-label">Canal d'au revoir</label>
                 <select class="form-select" id="goodbye-channel"></select>
               </div>
-              
+
+              <!-- Type de message -->
               <div class="form-group">
-                <label class="form-label">Message</label>
-                <textarea class="form-textarea" id="goodbye-message" rows="4" placeholder="Ex: Au revoir {user}, on espère te revoir sur {server} 👋"></textarea>
+                <label class="form-label">Type de message</label>
+                <select class="form-select" id="goodbye-message-type">
+                  <option value="text">📝 Texte simple</option>
+                  <option value="embed" selected>📦 Embed</option>
+                  <option value="both">📝📦 Texte + Embed</option>
+                </select>
+              </div>
+
+              <!-- Message texte -->
+              <div class="form-group" id="goodbye-text-group">
+                <label class="form-label">Message texte</label>
+                <textarea class="form-textarea" id="goodbye-message" rows="3" placeholder="Ex: Au revoir {user}, on espère te revoir sur {server} 👋"></textarea>
+              </div>
+
+              <!-- Configuration Embed -->
+              <div class="sub-section" id="goodbye-embed-section">
+                <h4 class="sub-section-title">📦 Configuration de l'embed</h4>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Titre de l'embed</label>
+                    <input type="text" class="form-input" id="goodbye-embed-title" placeholder="👋 Au revoir...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Couleur</label>
+                    <input type="color" class="form-input form-color" id="goodbye-embed-color" value="#ED4245">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Description de l'embed</label>
+                  <textarea class="form-textarea" id="goodbye-embed-description" rows="3" placeholder="**{user}** a quitté le serveur. À bientôt ! 👋"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Footer (pied de page)</label>
+                  <input type="text" class="form-input" id="goodbye-embed-footer" placeholder="Laissez vide pour le nom du serveur">
+                </div>
+
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Afficher l'avatar</span>
+                    <span class="inline-toggle-desc">Afficher l'avatar du membre dans l'embed</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="goodbye-embed-thumbnail" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Image générée -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">🖼️ Image d'au revoir</h4>
+                
+                <div class="inline-toggle">
+                  <div class="inline-toggle-label">
+                    <span class="inline-toggle-title">Générer une image</span>
+                    <span class="inline-toggle-desc">Créer une belle image personnalisée</span>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="goodbye-image-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div id="goodbye-image-options" style="display: none;">
+                  <div class="form-group">
+                    <label class="form-label">Style de dégradé</label>
+                    <div class="gradient-picker" id="goodbye-gradient-picker">
+                      <div class="gradient-option" data-gradient="purple" style="background: linear-gradient(135deg, #667eea, #764ba2);" title="Violet"></div>
+                      <div class="gradient-option" data-gradient="blue" style="background: linear-gradient(135deg, #4facfe, #00f2fe);" title="Bleu"></div>
+                      <div class="gradient-option" data-gradient="green" style="background: linear-gradient(135deg, #11998e, #38ef7d);" title="Vert"></div>
+                      <div class="gradient-option selected" data-gradient="red" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);" title="Rouge"></div>
+                      <div class="gradient-option" data-gradient="orange" style="background: linear-gradient(135deg, #f12711, #f5af19);" title="Orange"></div>
+                      <div class="gradient-option" data-gradient="pink" style="background: linear-gradient(135deg, #ee0979, #ff6a00);" title="Rose"></div>
+                      <div class="gradient-option" data-gradient="dark" style="background: linear-gradient(135deg, #232526, #414345);" title="Sombre"></div>
+                      <div class="gradient-option" data-gradient="sunset" style="background: linear-gradient(135deg, #fa709a, #fee140);" title="Coucher de soleil"></div>
+                      <div class="gradient-option" data-gradient="ocean" style="background: linear-gradient(135deg, #2193b0, #6dd5ed);" title="Océan"></div>
+                      <div class="gradient-option" data-gradient="forest" style="background: linear-gradient(135deg, #134e5e, #71b280);" title="Forêt"></div>
+                    </div>
+                    <input type="hidden" id="goodbye-image-gradient" value="red">
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Titre personnalisé</label>
+                      <input type="text" class="form-input" id="goodbye-image-title" placeholder="Au revoir">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Sous-titre personnalisé</label>
+                      <input type="text" class="form-input" id="goodbye-image-subtitle" placeholder="a quitté le serveur">
+                    </div>
+                  </div>
+
+                  <div class="inline-toggle">
+                    <div class="inline-toggle-label">
+                      <span class="inline-toggle-title">Afficher le nombre de membres</span>
+                      <span class="inline-toggle-desc">Affiche "Il reste X membres"</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="goodbye-image-member-count" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <!-- Aperçu de l'image -->
+                  <div class="form-group">
+                    <label class="form-label">👁️ Aperçu de l'image</label>
+                    <div class="image-preview" id="goodbye-image-preview">
+                      <div class="preview-placeholder">L'aperçu s'affichera ici</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div class="variables-box">
@@ -183,6 +432,7 @@
                 <div class="variables-list">
                   <span class="variable-tag"><code>{user}</code> <span>→ nom</span></span>
                   <span class="variable-tag"><code>{server}</code> <span>→ serveur</span></span>
+                  <span class="variable-tag"><code>{membercount}</code> <span>→ nombre de membres</span></span>
                 </div>
               </div>
             </div>

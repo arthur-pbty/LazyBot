@@ -32,15 +32,37 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS welcome_config (
     guild_id TEXT PRIMARY KEY,
     channel_id TEXT,
-    enabled INTEGER NOT NULL,
-    message TEXT NOT NULL
+    enabled INTEGER NOT NULL DEFAULT 0,
+    message TEXT,
+    message_type TEXT NOT NULL DEFAULT 'embed',
+    embed_title TEXT,
+    embed_description TEXT,
+    embed_color TEXT DEFAULT '#57F287',
+    embed_thumbnail INTEGER NOT NULL DEFAULT 1,
+    embed_footer TEXT,
+    image_enabled INTEGER NOT NULL DEFAULT 0,
+    image_gradient TEXT DEFAULT 'purple',
+    image_title TEXT,
+    image_subtitle TEXT,
+    image_show_member_count INTEGER NOT NULL DEFAULT 1
   );
 
   CREATE TABLE IF NOT EXISTS goodbye_config (
     guild_id TEXT PRIMARY KEY,
     channel_id TEXT,
-    enabled INTEGER NOT NULL,
-    message TEXT NOT NULL
+    enabled INTEGER NOT NULL DEFAULT 0,
+    message TEXT,
+    message_type TEXT NOT NULL DEFAULT 'embed',
+    embed_title TEXT,
+    embed_description TEXT,
+    embed_color TEXT DEFAULT '#ED4245',
+    embed_thumbnail INTEGER NOT NULL DEFAULT 1,
+    embed_footer TEXT,
+    image_enabled INTEGER NOT NULL DEFAULT 0,
+    image_gradient TEXT DEFAULT 'red',
+    image_title TEXT,
+    image_subtitle TEXT,
+    image_show_member_count INTEGER NOT NULL DEFAULT 1
   );
 
   CREATE TABLE IF NOT EXISTS autorole_newuser_config (
@@ -442,5 +464,59 @@ db.exec(`
     FOREIGN KEY (panel_id) REFERENCES role_panels(id) ON DELETE CASCADE
   );
 `);
+
+// Migration: Ajouter les nouvelles colonnes pour welcome/goodbye si elles n'existent pas
+const migrateWelcomeGoodbye = () => {
+  // Colonnes à ajouter pour welcome_config
+  const welcomeColumns = [
+    { name: 'message_type', sql: "ALTER TABLE welcome_config ADD COLUMN message_type TEXT NOT NULL DEFAULT 'embed'" },
+    { name: 'embed_title', sql: "ALTER TABLE welcome_config ADD COLUMN embed_title TEXT" },
+    { name: 'embed_description', sql: "ALTER TABLE welcome_config ADD COLUMN embed_description TEXT" },
+    { name: 'embed_color', sql: "ALTER TABLE welcome_config ADD COLUMN embed_color TEXT DEFAULT '#57F287'" },
+    { name: 'embed_thumbnail', sql: "ALTER TABLE welcome_config ADD COLUMN embed_thumbnail INTEGER NOT NULL DEFAULT 1" },
+    { name: 'embed_footer', sql: "ALTER TABLE welcome_config ADD COLUMN embed_footer TEXT" },
+    { name: 'image_enabled', sql: "ALTER TABLE welcome_config ADD COLUMN image_enabled INTEGER NOT NULL DEFAULT 0" },
+    { name: 'image_gradient', sql: "ALTER TABLE welcome_config ADD COLUMN image_gradient TEXT DEFAULT 'purple'" },
+    { name: 'image_title', sql: "ALTER TABLE welcome_config ADD COLUMN image_title TEXT" },
+    { name: 'image_subtitle', sql: "ALTER TABLE welcome_config ADD COLUMN image_subtitle TEXT" },
+    { name: 'image_show_member_count', sql: "ALTER TABLE welcome_config ADD COLUMN image_show_member_count INTEGER NOT NULL DEFAULT 1" }
+  ];
+
+  // Colonnes à ajouter pour goodbye_config
+  const goodbyeColumns = [
+    { name: 'message_type', sql: "ALTER TABLE goodbye_config ADD COLUMN message_type TEXT NOT NULL DEFAULT 'embed'" },
+    { name: 'embed_title', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_title TEXT" },
+    { name: 'embed_description', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_description TEXT" },
+    { name: 'embed_color', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_color TEXT DEFAULT '#ED4245'" },
+    { name: 'embed_thumbnail', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_thumbnail INTEGER NOT NULL DEFAULT 1" },
+    { name: 'embed_footer', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_footer TEXT" },
+    { name: 'image_enabled', sql: "ALTER TABLE goodbye_config ADD COLUMN image_enabled INTEGER NOT NULL DEFAULT 0" },
+    { name: 'image_gradient', sql: "ALTER TABLE goodbye_config ADD COLUMN image_gradient TEXT DEFAULT 'red'" },
+    { name: 'image_title', sql: "ALTER TABLE goodbye_config ADD COLUMN image_title TEXT" },
+    { name: 'image_subtitle', sql: "ALTER TABLE goodbye_config ADD COLUMN image_subtitle TEXT" },
+    { name: 'image_show_member_count', sql: "ALTER TABLE goodbye_config ADD COLUMN image_show_member_count INTEGER NOT NULL DEFAULT 1" }
+  ];
+
+  // Exécuter les migrations pour welcome_config
+  welcomeColumns.forEach(col => {
+    db.run(col.sql, (err) => {
+      if (err && !err.message.includes('duplicate column')) {
+        // Ignorer les erreurs de colonnes dupliquées
+      }
+    });
+  });
+
+  // Exécuter les migrations pour goodbye_config
+  goodbyeColumns.forEach(col => {
+    db.run(col.sql, (err) => {
+      if (err && !err.message.includes('duplicate column')) {
+        // Ignorer les erreurs de colonnes dupliquées
+      }
+    });
+  });
+};
+
+// Exécuter la migration
+migrateWelcomeGoodbye();
 
 module.exports = db;
