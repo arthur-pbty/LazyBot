@@ -7,6 +7,16 @@ module.exports = {
     if (message.author.bot) return;
     
     const guildId = message.guild.id;
+    const userId = message.author.id;
+
+    // ===== TRACK MESSAGE STATS =====
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    db.run(
+      `INSERT INTO user_activity_stats (guild_id, user_id, stat_type, value, date)
+       VALUES (?, ?, 'messages', 1, ?)
+       ON CONFLICT(guild_id, user_id, stat_type, date) DO UPDATE SET value = value + 1`,
+      [guildId, userId, today]
+    );
 
     // ===== XP SYSTEM =====
     db.get(

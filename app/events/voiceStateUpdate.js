@@ -10,12 +10,15 @@ module.exports = {
   async execute(client, oldState, newState) {
     // ===== PRIVATE ROOM (TEMP VOICE CHANNELS) =====
     await handlePrivateRoom(client, oldState, newState);
-    
+
     if (newState.member.user.bot) return;
     
     const guildId = newState.guild.id;
     const oderId = newState.member.id;
     const key = `${guildId}_${oderId}`;
+
+    // ===== TRACK VOICE TIME STATS =====
+    await trackVoiceTime(guildId, oderId, oldState, newState);
 
     // ===== AUTOROLE VOCAL =====
     db.get(
@@ -220,5 +223,52 @@ async function checkAndDeleteEmptyTempChannel(oldState) {
         [oldState.channelId]
       );
     }
+  }
+}
+
+// ===== VOICE TIME TRACKING =====
+async function trackVoiceTime(guildId, userId, oldState, newState) {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  // User joined voice channel
+  if (newState.channelId && !oldState.channelId) {
+    // Save join timestamp
+    db.run(
+      `INSERT OR REPLACE INTO voice_sessions (guild_id, user_id, join_timestamp)
+       VALUES (?, ?, ?)`,
+      [guildId, userId, Date.now()]
+    );
+  }
+  // User left voice channel
+  else if (!newState.channelId && oldState.channelId) {
+    // Get join timestamp and calculate duration
+    const session = await db.getAsync(
+      "SELECT join_timestamp FROM voice_sessions WHERE guild_id = ? AND user_id = ?",
+      [guildId, userId]
+    );
+
+    if (session) {
+      const durationMs = Date.now() - session.join_timestamp;
+      const durationSeconds = Math.floor(durationMs / 1000);
+
+      // Add voice time to stats (in seconds)
+      db.run(
+        `INSERT INTO user_activity_stats (guild_id, user_id, stat_type, value, date)
+         VALUES (?, ?, 'voice_time', ?, ?)
+         ON CONFLICT(guild_id, user_id, stat_type, date) DO UPDATE SET value = value + ?`,
+        [guildId, userId, durationSeconds, today, durationSeconds]
+      );
+
+      // Delete session
+      db.run(
+        "DELETE FROM voice_sessions WHERE guild_id = ? AND user_id = ?",
+        [guildId, userId]
+      );
+    }
+  }
+  // User switched channels (still in voice)
+  else if (newState.channelId && oldState.channelId && newState.channelId !== oldState.channelId) {
+    // Update session timestamp (continue tracking)
+    // No action needed, session continues
   }
 }

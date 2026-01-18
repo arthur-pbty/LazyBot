@@ -194,6 +194,25 @@ db.exec(`
     format TEXT NOT NULL DEFAULT '{stat}',
     UNIQUE(guild_id, channel_id)
   );
+
+  CREATE TABLE IF NOT EXISTS user_activity_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    stat_type TEXT NOT NULL,
+    value INTEGER NOT NULL DEFAULT 0,
+    date TEXT NOT NULL,
+    UNIQUE(guild_id, user_id, stat_type, date)
+  );
+
+  CREATE TABLE IF NOT EXISTS voice_sessions (
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    join_timestamp INTEGER NOT NULL,
+    PRIMARY KEY(guild_id, user_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_user_activity_stats_date ON user_activity_stats(guild_id, user_id, date);
 `);
 
 module.exports = db;
