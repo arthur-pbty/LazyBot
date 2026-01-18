@@ -236,6 +236,26 @@ db.exec(`
     server_channel_id TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS username_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    username TEXT NOT NULL,
+    display_name TEXT,
+    changed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_username_history_user ON username_history(user_id, changed_at DESC);
+
+  CREATE TABLE IF NOT EXISTS nickname_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    nickname TEXT,
+    changed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_nickname_history_user ON nickname_history(guild_id, user_id, changed_at DESC);
+
   CREATE TABLE IF NOT EXISTS scheduled_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id TEXT NOT NULL,

@@ -1,10 +1,34 @@
 const { AuditLogEvent } = require('discord.js');
 const { sendLog } = require('../fonctions/sendLog');
+const db = require('../db');
 
 module.exports = {
   name: 'guildMemberUpdate',
   async execute(client, oldMember, newMember) {
     const guild = newMember.guild;
+
+    // ===== ENREGISTRER LES CHANGEMENTS DE PSEUDO SERVEUR =====
+    if (oldMember.nickname !== newMember.nickname && !newMember.user.bot) {
+      try {
+        // Vérifier si ce pseudo n'est pas déjà le dernier enregistré
+        const lastEntry = await db.getAsync(
+          `SELECT nickname FROM nickname_history 
+           WHERE guild_id = ? AND user_id = ? 
+           ORDER BY changed_at DESC LIMIT 1`,
+          [guild.id, oldMember.id]
+        );
+
+        if (!lastEntry || lastEntry.nickname !== oldMember.nickname) {
+          db.run(
+            `INSERT INTO nickname_history (guild_id, user_id, nickname, changed_at)
+             VALUES (?, ?, ?, ?)`,
+            [guild.id, oldMember.id, oldMember.nickname, Math.floor(Date.now() / 1000)]
+          );
+        }
+      } catch (err) {
+        console.error('Erreur enregistrement historique pseudo:', err);
+      }
+    }
 
     // Vérifier les changements de rôles
     const oldRoles = oldMember.roles.cache;
