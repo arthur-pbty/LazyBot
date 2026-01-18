@@ -52,25 +52,33 @@ module.exports = {
           content: "Cette commande ne peut pas être utilisée en message privé.",
         })
         .then((msg) => setTimeout(() => msg.delete(), 5000));
-    if (process.env.OWNER && !process.env.OWNER === message.author.id) {
-      if (command.botOwnerOnly)
-        return message
-          .reply({
-            content: "Cette commande est réservée au propriétaire du bot.",
-          })
-          .then((msg) => setTimeout(() => msg.delete(), 5000));
-      if (
-        command.permissions &&
-        message.channel.type !== 1 &&
-        !command.permissions.every((permission) =>
-          message.member.permissions.has(permission),
-        )
+
+    // Vérification si la commande est réservée au propriétaire du bot
+    const isOwner = process.env.OWNER && process.env.OWNER === message.author.id;
+    
+    if (command.botOwnerOnly && !isOwner) {
+      return message
+        .reply({
+          content: "Cette commande est réservée au propriétaire du bot.",
+        })
+        .then((msg) => setTimeout(() => msg.delete(), 5000));
+    }
+
+    // Vérification des permissions (sauf pour le propriétaire du bot)
+    if (
+      !isOwner &&
+      command.permissions &&
+      command.permissions.length > 0 &&
+      message.channel.type !== 1 &&
+      !command.permissions.every((permission) =>
+        message.member.permissions.has(permission)
       )
-        return message
-          .reply({
-            content: "Vous n'avez pas la permission d'utiliser cette commande.",
-          })
-          .then((msg) => setTimeout(() => msg.delete(), 5000));
+    ) {
+      return message
+        .reply({
+          content: "Vous n'avez pas la permission d'utiliser cette commande.",
+        })
+        .then((msg) => setTimeout(() => msg.delete(), 5000));
     }
 
     try {

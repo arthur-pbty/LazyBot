@@ -29,23 +29,31 @@ module.exports = {
         content: "Cette commande ne peut pas être utilisée en message privé.",
         ephemeral: true,
       });
-    if (process.env.OWNER && !process.env.OWNER === interaction.user.id) {
-      if (command.botOwnerOnly)
-        return interaction.reply({
-          content: "Cette commande est réservée au propriétaire du bot.",
-          ephemeral: true,
-        });
-      if (
-        command.permissions &&
-        interaction.channel.type !== 1 &&
-        !command.permissions.every((permission) =>
-          interaction.member.permissions.has(permission),
-        )
+
+    // Vérification si la commande est réservée au propriétaire du bot
+    const isOwner = process.env.OWNER && process.env.OWNER === interaction.user.id;
+    
+    if (command.botOwnerOnly && !isOwner) {
+      return interaction.reply({
+        content: "Cette commande est réservée au propriétaire du bot.",
+        ephemeral: true,
+      });
+    }
+
+    // Vérification des permissions (sauf pour le propriétaire du bot)
+    if (
+      !isOwner &&
+      command.permissions &&
+      command.permissions.length > 0 &&
+      interaction.channel.type !== 1 &&
+      !command.permissions.every((permission) =>
+        interaction.member.permissions.has(permission)
       )
-        return interaction.reply({
-          content: "Vous n'avez pas la permission d'utiliser cette commande.",
-          ephemeral: true,
-        });
+    ) {
+      return interaction.reply({
+        content: "Vous n'avez pas la permission d'utiliser cette commande.",
+        ephemeral: true,
+      });
     }
 
     try {
