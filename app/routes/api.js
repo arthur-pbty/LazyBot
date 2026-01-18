@@ -1122,5 +1122,98 @@ module.exports = (app, db, client) => {
     );
   });
 
+  // Envoyer un message instantané
+  router.post("/bot/send-message", express.json(), async (req, res) => {
+    const { guildId, channelId, content, embed } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        return res.status(404).json({ success: false, error: "Serveur non trouvé" });
+      }
+
+      const channel = guild.channels.cache.get(channelId);
+      if (!channel) {
+        return res.status(404).json({ success: false, error: "Salon non trouvé" });
+      }
+
+      // Build message options
+      const messageOptions = {};
+
+      if (content) {
+        messageOptions.content = content;
+      }
+
+      if (embed) {
+        const { EmbedBuilder } = require("discord.js");
+        const embedBuilder = new EmbedBuilder();
+
+        if (embed.title) embedBuilder.setTitle(embed.title);
+        if (embed.description) embedBuilder.setDescription(embed.description);
+        if (embed.color) embedBuilder.setColor(embed.color);
+        
+        if (embed.author && embed.author.name) {
+          embedBuilder.setAuthor({
+            name: embed.author.name,
+            url: embed.author.url || undefined,
+            iconURL: embed.author.icon_url || undefined
+          });
+        }
+
+        if (embed.thumbnail && embed.thumbnail.url) {
+          embedBuilder.setThumbnail(embed.thumbnail.url);
+        }
+
+        if (embed.image && embed.image.url) {
+          embedBuilder.setImage(embed.image.url);
+        }
+
+        if (embed.footer && embed.footer.text) {
+          embedBuilder.setFooter({
+            text: embed.footer.text,
+            iconURL: embed.footer.icon_url || undefined
+          });
+        }
+
+        if (embed.timestamp) {
+          embedBuilder.setTimestamp();
+        }
+
+        if (embed.fields && embed.fields.length > 0) {
+          embed.fields.forEach(field => {
+            if (field.name && field.value) {
+              embedBuilder.addFields({
+                name: field.name,
+                value: field.value,
+                inline: field.inline || false
+              });
+            }
+          });
+        }
+
+        messageOptions.embeds = [embedBuilder];
+      }
+
+      await channel.send(messageOptions);
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur envoi message:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use("/api", router);
 };

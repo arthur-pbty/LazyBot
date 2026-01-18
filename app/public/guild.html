@@ -66,6 +66,10 @@
             <span class="nav-item-icon">⏰</span>
             Messages programmés
           </a>
+          <a class="nav-item" data-section="sendmessage">
+            <span class="nav-item-icon">✉️</span>
+            Envoyer un message
+          </a>
         </div>
       </nav>
       
@@ -932,6 +936,132 @@
           </div>
         </section>
 
+        <!-- Section: Envoyer un message -->
+        <section class="config-section" id="section-sendmessage">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div>
+                <h2 class="config-card-title">✉️ Envoyer un message</h2>
+                <p class="config-card-subtitle">Envoyez un message dans un salon de votre serveur</p>
+              </div>
+            </div>
+            <div class="config-card-body">
+
+              <div class="form-group">
+                <label class="form-label">📺 Salon</label>
+                <select class="form-select" id="sendmsg-channel-select">
+                  <option value="">-- Sélectionner un salon --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">💬 Contenu du message</label>
+                <textarea class="form-textarea" id="sendmsg-content" rows="4" placeholder="Le contenu de votre message..."></textarea>
+              </div>
+
+              <!-- Embed optionnel -->
+              <div class="form-group">
+                <label class="form-label">
+                  <input type="checkbox" id="sendmsg-embed-enabled"> 
+                  📦 Ajouter un embed
+                </label>
+              </div>
+
+              <div id="sendmsg-embed-options" style="display: none;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Titre</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-title" placeholder="Titre de l'embed...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Couleur</label>
+                    <input type="color" class="form-input" id="sendmsg-embed-color" value="#5865F2" style="height: 40px;">
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-textarea" id="sendmsg-embed-description" rows="4" placeholder="Description de l'embed..."></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">URL de l'auteur</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-author-url" placeholder="https://...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nom de l'auteur</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-author-name" placeholder="Nom...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Icône de l'auteur (URL)</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-author-icon" placeholder="https://...">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">🖼️ Image (URL)</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-image" placeholder="https://...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">📎 Miniature (URL)</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-thumbnail" placeholder="https://...">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Texte du footer</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-footer-text" placeholder="Footer...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Icône du footer (URL)</label>
+                    <input type="text" class="form-input" id="sendmsg-embed-footer-icon" placeholder="https://...">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    <input type="checkbox" id="sendmsg-embed-timestamp"> 
+                    Ajouter un timestamp (date/heure actuelle)
+                  </label>
+                </div>
+
+                <!-- Champs (Fields) -->
+                <div class="form-group">
+                  <label class="form-label">📝 Champs (Fields)</label>
+                  <div id="sendmsg-fields-container"></div>
+                  <button type="button" class="btn btn-sm btn-secondary" id="sendmsg-add-field">+ Ajouter un champ</button>
+                </div>
+              </div>
+
+              <!-- Aperçu -->
+              <div class="form-group">
+                <label class="form-label">👁️ Aperçu</label>
+                <div id="sendmsg-preview" class="message-preview">
+                  <p class="text-muted">L'aperçu apparaîtra ici...</p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="sendmsg-send-btn">
+                  📤 Envoyer le message
+                </button>
+              </div>
+
+              <!-- Historique -->
+              <div class="sub-section" style="margin-top: 2rem;">
+                <h4 class="sub-section-title">📋 Derniers messages envoyés</h4>
+                <div id="sendmsg-history">
+                  <p class="text-muted">Aucun message envoyé récemment.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -950,5 +1080,6 @@
     <script src="/guild/countingForm.js"></script>
     <script src="/guild/statsChannelsForm.js"></script>
     <script src="/guild/scheduledMessagesForm.js"></script>
+    <script src="/guild/sendMessageForm.js"></script>
   </body>
 </html>

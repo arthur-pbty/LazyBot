@@ -60,6 +60,7 @@ fetch(`/api/bot/get-text-channels/${guildId}`)
     const goodbye = document.getElementById("goodbye-channel");
     const levelAnnouncements = document.getElementById("level-announcements-channel");
     const levelChannelRestrict = document.getElementById("level-channel-with-or-without-xp");
+    const sendmsgChannel = document.getElementById("sendmsg-channel-select");
 
     channels.forEach(c => {
       const opt = new Option(`#${c.name}`, c.id);
@@ -67,6 +68,7 @@ fetch(`/api/bot/get-text-channels/${guildId}`)
       goodbye?.appendChild(opt.cloneNode(true));
       levelAnnouncements?.appendChild(opt.cloneNode(true));
       levelChannelRestrict?.appendChild(opt.cloneNode(true));
+      sendmsgChannel?.appendChild(opt.cloneNode(true));
     });
   });
 
