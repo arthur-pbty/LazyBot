@@ -410,6 +410,148 @@ client.once("clientReady", async () => {
 });
 
 
+// ===== SCHEDULED MESSAGES SYSTEM =====
+const { EmbedBuilder } = require("discord.js");
+
+// Track last channel activity
+const channelLastActivity = new Map();
+
+// Update last activity on message
+client.on("messageCreate", (message) => {
+  if (!message.guild || message.author.bot) return;
+  channelLastActivity.set(message.channel.id, Date.now());
+});
+
+// Process scheduled messages
+async function processScheduledMessages() {
+  try {
+    const messages = await db.allAsync(
+      "SELECT * FROM scheduled_messages WHERE enabled = 1"
+    );
+
+    // Utiliser le fuseau horaire français
+    const now = new Date();
+    const parisTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+    const currentDay = parisTime.getDay(); // 0-6 (Sunday-Saturday)
+    const currentHour = parisTime.getHours().toString().padStart(2, '0');
+    const currentMinute = parisTime.getMinutes().toString().padStart(2, '0');
+    const currentTime = `${currentHour}:${currentMinute}`;
+    const currentTimestamp = Date.now();
+
+    for (const msg of messages) {
+      try {
+        const guild = client.guilds.cache.get(msg.guild_id);
+        if (!guild) continue;
+
+        const channel = guild.channels.cache.get(msg.channel_id);
+        if (!channel) continue;
+
+        let shouldSend = false;
+
+        if (msg.schedule_type === "weekly") {
+          // Check day and time
+          const days = JSON.parse(msg.days_of_week || "[]").map(d => parseInt(d));
+          const times = JSON.parse(msg.times_of_day || "[]");
+
+          if (days.includes(currentDay) && times.includes(currentTime)) {
+            // Check if already sent this minute
+            const lastSent = msg.last_sent_at || 0;
+            const oneMinuteAgo = currentTimestamp - 60000;
+            
+            if (lastSent < oneMinuteAgo) {
+              shouldSend = true;
+            }
+          }
+        } else if (msg.schedule_type === "interval") {
+          // Check interval
+          const intervalMs = msg.interval_unit === "hours" 
+            ? msg.interval_value * 60 * 60 * 1000 
+            : msg.interval_value * 60 * 1000;
+
+          const lastSent = msg.last_sent_at || 0;
+          
+          if (currentTimestamp - lastSent >= intervalMs) {
+            shouldSend = true;
+          }
+        }
+
+        if (!shouldSend) continue;
+
+        // Check force_send option
+        if (!msg.force_send) {
+          const lastActivity = channelLastActivity.get(msg.channel_id) || msg.last_channel_activity || 0;
+          const lastSent = msg.last_sent_at || 0;
+          
+          // If no activity since last send, skip
+          if (lastActivity <= lastSent) {
+            continue;
+          }
+        }
+
+        // Delete previous message if option enabled
+        if (msg.delete_previous && msg.last_message_id) {
+          try {
+            const oldMessage = await channel.messages.fetch(msg.last_message_id);
+            if (oldMessage) await oldMessage.delete();
+          } catch (err) {
+            // Message may have been deleted already
+          }
+        }
+
+        // Build message content
+        const messageOptions = {};
+
+        if (msg.message_content && msg.message_content.trim()) {
+          messageOptions.content = msg.message_content;
+        }
+
+        if (msg.embed_enabled) {
+          const embed = new EmbedBuilder();
+          
+          if (msg.embed_title) embed.setTitle(msg.embed_title);
+          if (msg.embed_description) embed.setDescription(msg.embed_description);
+          if (msg.embed_color) {
+            const color = msg.embed_color.startsWith('#') 
+              ? parseInt(msg.embed_color.slice(1), 16) 
+              : parseInt(msg.embed_color, 16);
+            embed.setColor(color);
+          }
+          embed.setTimestamp();
+
+          messageOptions.embeds = [embed];
+        }
+
+        // Send message
+        const sentMessage = await channel.send(messageOptions);
+
+        // Update database
+        db.run(
+          `UPDATE scheduled_messages SET 
+            last_sent_at = ?, 
+            last_message_id = ?,
+            last_channel_activity = ?
+          WHERE id = ?`,
+          [currentTimestamp, sentMessage.id, channelLastActivity.get(msg.channel_id) || currentTimestamp, msg.id]
+        );
+
+        console.log(`📨 Message programmé envoyé: ${msg.id} dans ${channel.name}`);
+
+      } catch (err) {
+        console.error(`Erreur envoi message programmé ${msg.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error("Erreur processScheduledMessages:", err);
+  }
+}
+
+// Run every minute to check scheduled messages
+setInterval(processScheduledMessages, 60 * 1000);
+
+// Initial run after 10 seconds
+setTimeout(processScheduledMessages, 10 * 1000);
+
+
 client.login(process.env.BOT_TOKEN);
 
 module.exports = client;

@@ -213,6 +213,29 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_user_activity_stats_date ON user_activity_stats(guild_id, user_id, date);
+
+  CREATE TABLE IF NOT EXISTS scheduled_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    message_content TEXT NOT NULL,
+    embed_enabled INTEGER NOT NULL DEFAULT 0,
+    embed_title TEXT,
+    embed_description TEXT,
+    embed_color TEXT DEFAULT '#5865F2',
+    schedule_type TEXT NOT NULL DEFAULT 'weekly',
+    days_of_week TEXT DEFAULT '[]',
+    times_of_day TEXT DEFAULT '[]',
+    interval_value INTEGER DEFAULT 60,
+    interval_unit TEXT DEFAULT 'minutes',
+    force_send INTEGER NOT NULL DEFAULT 1,
+    delete_previous INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    last_sent_at INTEGER,
+    last_message_id TEXT,
+    last_channel_activity INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
 `);
 
 module.exports = db;

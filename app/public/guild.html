@@ -62,6 +62,10 @@
             <span class="nav-item-icon">📊</span>
             Salons de stats
           </a>
+          <a class="nav-item" data-section="scheduledmessages">
+            <span class="nav-item-icon">⏰</span>
+            Messages programmés
+          </a>
         </div>
       </nav>
       
@@ -776,6 +780,158 @@
           </div>
         </section>
 
+        <!-- ===== SCHEDULED MESSAGES ===== -->
+        <section class="config-section" id="section-scheduledmessages">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div>
+                <h2 class="config-card-title">⏰ Messages Programmés</h2>
+                <p class="config-card-subtitle">Programmez l'envoi automatique de messages dans vos salons</p>
+              </div>
+            </div>
+            <div class="config-card-body">
+
+              <!-- Formulaire d'ajout -->
+              <div class="sub-section" id="scheduled-form-section">
+                <h4 class="sub-section-title" id="scheduled-form-title">➕ Nouveau message programmé</h4>
+                
+                <input type="hidden" id="scheduled-edit-id" value="">
+
+                <div class="form-group">
+                  <label class="form-label">📺 Salon</label>
+                  <select class="form-select" id="scheduled-channel-select">
+                    <option value="">-- Sélectionner un salon --</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">💬 Contenu du message</label>
+                  <textarea class="form-textarea" id="scheduled-message-content" rows="3" placeholder="Le contenu de votre message..."></textarea>
+                </div>
+
+                <!-- Embed optionnel -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <input type="checkbox" id="scheduled-embed-enabled"> 
+                    📦 Utiliser un embed
+                  </label>
+                </div>
+
+                <div id="scheduled-embed-options" style="display: none;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Titre de l'embed</label>
+                      <input type="text" class="form-input" id="scheduled-embed-title" placeholder="Titre...">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Couleur</label>
+                      <input type="color" class="form-input" id="scheduled-embed-color" value="#5865F2" style="height: 40px;">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Description de l'embed</label>
+                    <textarea class="form-textarea" id="scheduled-embed-description" rows="3" placeholder="Description..."></textarea>
+                  </div>
+                </div>
+
+                <!-- Type de planification -->
+                <div class="form-group">
+                  <label class="form-label">📅 Type de planification</label>
+                  <select class="form-select" id="scheduled-type">
+                    <option value="weekly">Jours et heures spécifiques</option>
+                    <option value="interval">Intervalle régulier</option>
+                  </select>
+                </div>
+
+                <!-- Options pour planification hebdomadaire -->
+                <div id="scheduled-weekly-options">
+                  <div class="form-group">
+                    <label class="form-label">📆 Jours de la semaine</label>
+                    <div class="checkbox-group" id="scheduled-days">
+                      <label class="checkbox-item"><input type="checkbox" value="1"> Lun</label>
+                      <label class="checkbox-item"><input type="checkbox" value="2"> Mar</label>
+                      <label class="checkbox-item"><input type="checkbox" value="3"> Mer</label>
+                      <label class="checkbox-item"><input type="checkbox" value="4"> Jeu</label>
+                      <label class="checkbox-item"><input type="checkbox" value="5"> Ven</label>
+                      <label class="checkbox-item"><input type="checkbox" value="6"> Sam</label>
+                      <label class="checkbox-item"><input type="checkbox" value="0"> Dim</label>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">🕐 Heures d'envoi</label>
+                    <div class="times-input-container">
+                      <select class="form-select" id="scheduled-hour-select" style="width: 80px;">
+                        <option value="">HH</option>
+                      </select>
+                      <span style="font-size: 1.2rem; color: var(--text-primary);">:</span>
+                      <select class="form-select" id="scheduled-minute-select" style="width: 80px;">
+                        <option value="">MM</option>
+                      </select>
+                      <button type="button" class="btn btn-sm btn-secondary" id="scheduled-add-time">+ Ajouter</button>
+                    </div>
+                    <div class="times-list" id="scheduled-times-list"></div>
+                  </div>
+                </div>
+
+                <!-- Options pour intervalle -->
+                <div id="scheduled-interval-options" style="display: none;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Toutes les</label>
+                      <input type="number" class="form-input" id="scheduled-interval-value" min="1" value="60">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Unité</label>
+                      <select class="form-select" id="scheduled-interval-unit">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours">Heures</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Options d'envoi -->
+                <div class="form-group">
+                  <label class="form-label">⚙️ Options d'envoi</label>
+                  <div class="checkbox-group-vertical">
+                    <label class="checkbox-item">
+                      <input type="checkbox" id="scheduled-force-send" checked>
+                      Envoyer même si le salon est inactif
+                    </label>
+                    <label class="checkbox-item">
+                      <input type="checkbox" id="scheduled-delete-previous">
+                      Supprimer le message précédent
+                    </label>
+                    <label class="checkbox-item">
+                      <input type="checkbox" id="scheduled-enabled" checked>
+                      Activer ce message programmé
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-primary" id="scheduled-save-btn">
+                    💾 Enregistrer
+                  </button>
+                  <button type="button" class="btn btn-secondary" id="scheduled-cancel-btn" style="display: none;">
+                    ❌ Annuler
+                  </button>
+                </div>
+              </div>
+
+              <!-- Liste des messages programmés -->
+              <div class="sub-section">
+                <h4 class="sub-section-title">📋 Messages programmés</h4>
+                <div id="scheduled-messages-list">
+                  <p class="text-muted">Aucun message programmé.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -793,5 +949,6 @@
     <script src="/guild/privateroomForm.js"></script>
     <script src="/guild/countingForm.js"></script>
     <script src="/guild/statsChannelsForm.js"></script>
+    <script src="/guild/scheduledMessagesForm.js"></script>
   </body>
 </html>

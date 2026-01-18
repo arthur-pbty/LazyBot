@@ -965,5 +965,162 @@ module.exports = (app, db, client) => {
     });
   });
 
+  // ===== SCHEDULED MESSAGES =====
+
+  // Récupérer tous les messages programmés d'un serveur
+  router.get("/bot/get-scheduled-messages/:guildId", (req, res) => {
+    const { guildId } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json([]);
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json([]);
+    }
+
+    db.all(
+      "SELECT * FROM scheduled_messages WHERE guild_id = ? ORDER BY created_at DESC",
+      [guildId],
+      (err, rows) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json([]);
+        }
+        res.json(rows || []);
+      }
+    );
+  });
+
+  // Ajouter un message programmé
+  router.post("/bot/add-scheduled-message", express.json(), (req, res) => {
+    const { 
+      guildId, channelId, messageContent, 
+      embedEnabled, embedTitle, embedDescription, embedColor,
+      scheduleType, daysOfWeek, timesOfDay, intervalValue, intervalUnit,
+      forceSend, deletePrevious, enabled 
+    } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false });
+    }
+
+    db.run(
+      `INSERT INTO scheduled_messages (
+        guild_id, channel_id, message_content,
+        embed_enabled, embed_title, embed_description, embed_color,
+        schedule_type, days_of_week, times_of_day, interval_value, interval_unit,
+        force_send, delete_previous, enabled
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        guildId, channelId, messageContent || '',
+        embedEnabled ? 1 : 0, embedTitle || null, embedDescription || null, embedColor || '#5865F2',
+        scheduleType || 'weekly', 
+        JSON.stringify(daysOfWeek || []), 
+        JSON.stringify(timesOfDay || []),
+        intervalValue || 60, intervalUnit || 'minutes',
+        forceSend ? 1 : 0, deletePrevious ? 1 : 0, enabled ? 1 : 0
+      ],
+      function(err) {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true, id: this.lastID });
+      }
+    );
+  });
+
+  // Modifier un message programmé
+  router.put("/bot/update-scheduled-message/:id", express.json(), (req, res) => {
+    const { id } = req.params;
+    const { 
+      channelId, messageContent, 
+      embedEnabled, embedTitle, embedDescription, embedColor,
+      scheduleType, daysOfWeek, timesOfDay, intervalValue, intervalUnit,
+      forceSend, deletePrevious, enabled 
+    } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    db.run(
+      `UPDATE scheduled_messages SET
+        channel_id = ?, message_content = ?,
+        embed_enabled = ?, embed_title = ?, embed_description = ?, embed_color = ?,
+        schedule_type = ?, days_of_week = ?, times_of_day = ?, interval_value = ?, interval_unit = ?,
+        force_send = ?, delete_previous = ?, enabled = ?
+      WHERE id = ?`,
+      [
+        channelId, messageContent || '',
+        embedEnabled ? 1 : 0, embedTitle || null, embedDescription || null, embedColor || '#5865F2',
+        scheduleType || 'weekly', 
+        JSON.stringify(daysOfWeek || []), 
+        JSON.stringify(timesOfDay || []),
+        intervalValue || 60, intervalUnit || 'minutes',
+        forceSend ? 1 : 0, deletePrevious ? 1 : 0, enabled ? 1 : 0,
+        id
+      ],
+      (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+
+  // Supprimer un message programmé
+  router.delete("/bot/delete-scheduled-message/:id", (req, res) => {
+    const { id } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    db.run("DELETE FROM scheduled_messages WHERE id = ?", [id], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // Toggle enabled/disabled
+  router.patch("/bot/toggle-scheduled-message/:id", (req, res) => {
+    const { id } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false });
+    }
+
+    db.run(
+      "UPDATE scheduled_messages SET enabled = NOT enabled WHERE id = ?",
+      [id],
+      (err) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ success: false });
+        }
+        res.json({ success: true });
+      }
+    );
+  });
+
   app.use("/api", router);
 };
