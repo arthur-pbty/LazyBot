@@ -9,6 +9,27 @@ module.exports = {
     const guildId = message.guild.id;
     const userId = message.author.id;
 
+    // ===== BOT MENTION RESPONSE =====
+    if (message.mentions.has(client.user) && !message.content.startsWith('!') && !message.content.startsWith('/')) {
+      // Vérifier que ce n'est pas juste une réponse à un message du bot
+      if (message.type !== 19 || message.mentions.users.first()?.id === client.user.id) {
+        const responses = [
+          `Hey ${message.author} ! 👋 Besoin d'aide ? Utilise \`/help\` pour voir mes commandes !`,
+          `Salut ${message.author} ! 😊 Tu m'as appelé ? Tape \`/help\` pour découvrir ce que je peux faire !`,
+          `Coucou ${message.author} ! ✨ Je suis là pour t'aider ! Essaie \`/help\` pour commencer.`,
+          `Yo ${message.author} ! 🎉 Tu voulais me parler ? Utilise \`/help\` pour voir toutes mes commandes !`,
+          `${message.author} ! 👀 Oui oui, je suis bien là ! N'hésite pas à utiliser \`/help\` si tu as besoin de moi.`
+        ];
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        await message.reply({
+          content: randomResponse,
+          allowedMentions: { repliedUser: true }
+        });
+        return;
+      }
+    }
+
     // ===== TRACK MESSAGE STATS =====
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     db.run(
