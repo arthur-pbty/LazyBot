@@ -82,6 +82,10 @@
             <span class="nav-item-icon">🛡️</span>
             Anti-Raid
           </a>
+          <a class="nav-item" data-section="rolepanels">
+            <span class="nav-item-icon">🎭</span>
+            Rôles par boutons
+          </a>
         </div>
       </nav>
       
@@ -1898,6 +1902,164 @@
           </div>
         </section>
 
+        <!-- Section Role Panels -->
+        <section id="section-rolepanels" class="config-section">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">🎭</span>
+                <h2>Rôles par boutons</h2>
+              </div>
+            </div>
+            <div class="config-card-body">
+              <p class="text-muted">
+                Créez des panneaux de rôles interactifs. Les utilisateurs pourront cliquer sur des boutons pour obtenir ou retirer des rôles.
+              </p>
+
+              <!-- Liste des panels -->
+              <div id="role-panels-list" class="panels-list">
+                <div class="loading-message">Chargement des panels...</div>
+              </div>
+
+              <!-- Bouton pour créer un nouveau panel -->
+              <button type="button" class="btn btn-primary" id="create-panel-btn" style="margin-top: 1rem;">
+                ➕ Créer un nouveau panel
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal création/édition de panel -->
+          <div id="panel-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 id="panel-modal-title">Créer un panel</h3>
+                <button class="modal-close" id="close-panel-modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="edit-panel-id">
+                
+                <div class="form-group">
+                  <label class="form-label">📝 Nom du panel (identifiant unique)</label>
+                  <input type="text" class="form-input" id="panel-name" placeholder="ex: couleurs, jeux, notifications">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">📁 Salon</label>
+                  <select class="form-select" id="panel-channel"></select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">🏷️ Titre de l'embed</label>
+                  <input type="text" class="form-input" id="panel-title" placeholder="🎭 Choisissez vos rôles">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">📄 Description</label>
+                  <textarea class="form-input" id="panel-description" rows="3" placeholder="Cliquez sur les boutons ci-dessous pour obtenir vos rôles."></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">🎨 Couleur</label>
+                    <input type="color" class="form-input" id="panel-color" value="#5865F2">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">⚙️ Mode</label>
+                    <select class="form-select" id="panel-mode">
+                      <option value="toggle">Toggle (ajouter/retirer)</option>
+                      <option value="add">Ajouter uniquement</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <div class="checkbox-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="panel-exclusive">
+                      Rôles exclusifs (un seul à la fois)
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">🔒 Rôle requis (optionnel)</label>
+                  <select class="form-select" id="panel-required-role">
+                    <option value="">Aucun</option>
+                  </select>
+                  <small class="text-muted">Seuls les membres avec ce rôle pourront utiliser ce panel.</small>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">🖼️ Image URL (optionnel)</label>
+                    <input type="text" class="form-input" id="panel-image" placeholder="https://...">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">🔲 Thumbnail URL (optionnel)</label>
+                    <input type="text" class="form-input" id="panel-thumbnail" placeholder="https://...">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <div id="status-panel-form" class="status-message"></div>
+                <button type="button" class="btn btn-secondary" id="cancel-panel-btn">Annuler</button>
+                <button type="button" class="btn btn-primary" id="save-panel-btn">💾 Sauvegarder</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal édition des boutons -->
+          <div id="buttons-modal" class="modal" style="display: none;">
+            <div class="modal-content modal-lg">
+              <div class="modal-header">
+                <h3 id="buttons-modal-title">Boutons du panel</h3>
+                <button class="modal-close" id="close-buttons-modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="buttons-panel-id">
+                
+                <!-- Liste des boutons existants -->
+                <div id="panel-buttons-list" class="buttons-list"></div>
+
+                <!-- Formulaire d'ajout de bouton -->
+                <div class="add-button-form" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                  <h4>➕ Ajouter un bouton</h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">🎭 Rôle</label>
+                      <select class="form-select" id="new-button-role"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">🏷️ Label</label>
+                      <input type="text" class="form-input" id="new-button-label" placeholder="Mon rôle">
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">😀 Emoji (optionnel)</label>
+                      <input type="text" class="form-input" id="new-button-emoji" placeholder="🎮">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">🎨 Style</label>
+                      <select class="form-select" id="new-button-style">
+                        <option value="primary">Bleu (Primary)</option>
+                        <option value="secondary">Gris (Secondary)</option>
+                        <option value="success">Vert (Success)</option>
+                        <option value="danger">Rouge (Danger)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-success" id="add-button-btn">➕ Ajouter le bouton</button>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <div id="status-buttons-form" class="status-message"></div>
+                <button type="button" class="btn btn-primary" id="publish-panel-btn">🚀 Publier / Actualiser le panel</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -1920,5 +2082,6 @@
     <script src="/guild/botAppearanceForm.js"></script>
     <script src="/guild/logsForm.js"></script>
     <script src="/guild/antiraidForm.js"></script>
+    <script src="/guild/rolePanelsForm.js"></script>
   </body>
 </html>

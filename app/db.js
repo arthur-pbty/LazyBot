@@ -410,6 +410,37 @@ db.exec(`
     last_channel_activity INTEGER,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
   );
+
+  -- Système de rôles par boutons
+  CREATE TABLE IF NOT EXISTS role_panels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    message_id TEXT,
+    name TEXT NOT NULL,
+    title TEXT,
+    description TEXT,
+    color TEXT DEFAULT '#5865F2',
+    image_url TEXT,
+    thumbnail_url TEXT,
+    mode TEXT NOT NULL DEFAULT 'toggle',
+    exclusive INTEGER NOT NULL DEFAULT 0,
+    required_role_id TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS role_panel_buttons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    panel_id INTEGER NOT NULL,
+    role_id TEXT NOT NULL,
+    label TEXT NOT NULL,
+    emoji TEXT,
+    style TEXT NOT NULL DEFAULT 'primary',
+    position INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (panel_id) REFERENCES role_panels(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;

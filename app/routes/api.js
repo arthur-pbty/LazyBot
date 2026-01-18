@@ -2037,5 +2037,413 @@ module.exports = (app, db, client) => {
     }
   });
 
+  // =============================================
+  // ========== ROLE PANELS API ==================
+  // =============================================
+
+  // Récupérer tous les panels d'un serveur
+  router.get("/bot/get-role-panels", async (req, res) => {
+    const { guildId } = req.query;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const panels = await db.allAsync(
+        "SELECT * FROM role_panels WHERE guild_id = ? ORDER BY created_at DESC",
+        [guildId]
+      );
+
+      // Récupérer les boutons pour chaque panel
+      for (const panel of panels) {
+        panel.buttons = await db.allAsync(
+          "SELECT * FROM role_panel_buttons WHERE panel_id = ? ORDER BY position",
+          [panel.id]
+        );
+      }
+
+      // Récupérer les salons et rôles
+      const guild = client.guilds.cache.get(guildId);
+      const channels = guild?.channels.cache
+        .filter(c => c.type === 0)
+        .map(c => ({ id: c.id, name: c.name })) || [];
+      const roles = guild?.roles.cache
+        .filter(r => r.id !== guildId && !r.managed)
+        .sort((a, b) => b.position - a.position)
+        .map(r => ({ id: r.id, name: r.name, color: r.hexColor })) || [];
+
+      res.json({ success: true, panels, channels, roles });
+
+    } catch (err) {
+      console.error("Erreur get role panels:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Créer un nouveau panel
+  router.post("/bot/create-role-panel", express.json(), async (req, res) => {
+    const { guildId, name, channelId, title, description, color, mode, exclusive, requiredRoleId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      // Vérifier si un panel avec ce nom existe
+      const existing = await db.getAsync(
+        "SELECT id FROM role_panels WHERE guild_id = ? AND name = ?",
+        [guildId, name]
+      );
+
+      if (existing) {
+        return res.json({ success: false, error: "Un panel avec ce nom existe déjà" });
+      }
+
+      const panelId = await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO role_panels (guild_id, channel_id, name, title, description, color, mode, exclusive, required_role_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [guildId, channelId, name, title, description, color || '#5865F2', mode || 'toggle', exclusive ? 1 : 0, requiredRoleId || null],
+          function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+          }
+        );
+      });
+
+      res.json({ success: true, panelId });
+
+    } catch (err) {
+      console.error("Erreur create role panel:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Mettre à jour un panel
+  router.post("/bot/update-role-panel", express.json(), async (req, res) => {
+    const { guildId, panelId, channelId, title, description, color, imageUrl, thumbnailUrl, mode, exclusive, requiredRoleId, enabled } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(
+          `UPDATE role_panels SET
+            channel_id = ?,
+            title = ?,
+            description = ?,
+            color = ?,
+            image_url = ?,
+            thumbnail_url = ?,
+            mode = ?,
+            exclusive = ?,
+            required_role_id = ?,
+            enabled = ?
+           WHERE id = ? AND guild_id = ?`,
+          [channelId, title, description, color, imageUrl || null, thumbnailUrl || null, mode, exclusive ? 1 : 0, requiredRoleId || null, enabled ? 1 : 0, panelId, guildId],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Mettre à jour le message Discord
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ?", [panelId]);
+      const buttons = await db.allAsync("SELECT * FROM role_panel_buttons WHERE panel_id = ?", [panelId]);
+
+      if (panel && enabled) {
+        const { updatePanelMessage } = require('../commands/🔧 Administration/rolepanel');
+        await updatePanelMessage(client, panel, buttons);
+      }
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur update role panel:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Supprimer un panel
+  router.post("/bot/delete-role-panel", express.json(), async (req, res) => {
+    const { guildId, panelId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      // Récupérer le panel pour supprimer le message
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ? AND guild_id = ?", [panelId, guildId]);
+
+      if (panel && panel.message_id) {
+        try {
+          const guild = client.guilds.cache.get(guildId);
+          const channel = guild?.channels.cache.get(panel.channel_id);
+          if (channel) {
+            const message = await channel.messages.fetch(panel.message_id).catch(() => null);
+            if (message) await message.delete();
+          }
+        } catch {}
+      }
+
+      // Supprimer les boutons puis le panel
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM role_panel_buttons WHERE panel_id = ?", [panelId], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM role_panels WHERE id = ? AND guild_id = ?", [panelId, guildId], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur delete role panel:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Ajouter un bouton à un panel
+  router.post("/bot/add-panel-button", express.json(), async (req, res) => {
+    const { guildId, panelId, roleId, label, emoji, style } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      // Vérifier le panel
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ? AND guild_id = ?", [panelId, guildId]);
+      if (!panel) {
+        return res.json({ success: false, error: "Panel non trouvé" });
+      }
+
+      // Vérifier le nombre de boutons
+      const count = await db.getAsync("SELECT COUNT(*) as count FROM role_panel_buttons WHERE panel_id = ?", [panelId]);
+      if (count.count >= 25) {
+        return res.json({ success: false, error: "Limite de 25 boutons atteinte" });
+      }
+
+      // Ajouter le bouton
+      const buttonId = await new Promise((resolve, reject) => {
+        db.run(
+          "INSERT INTO role_panel_buttons (panel_id, role_id, label, emoji, style, position) VALUES (?, ?, ?, ?, ?, ?)",
+          [panelId, roleId, label, emoji || null, style || 'primary', count.count],
+          function(err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+          }
+        );
+      });
+
+      // Mettre à jour le message
+      const buttons = await db.allAsync("SELECT * FROM role_panel_buttons WHERE panel_id = ?", [panelId]);
+      const { updatePanelMessage } = require('../commands/🔧 Administration/rolepanel');
+      await updatePanelMessage(client, panel, buttons);
+
+      res.json({ success: true, buttonId });
+
+    } catch (err) {
+      console.error("Erreur add panel button:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Mettre à jour un bouton
+  router.post("/bot/update-panel-button", express.json(), async (req, res) => {
+    const { guildId, buttonId, roleId, label, emoji, style, enabled, position } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      // Vérifier que le bouton appartient bien à un panel de ce serveur
+      const button = await db.getAsync(
+        `SELECT rpb.*, rp.guild_id FROM role_panel_buttons rpb 
+         JOIN role_panels rp ON rpb.panel_id = rp.id 
+         WHERE rpb.id = ? AND rp.guild_id = ?`,
+        [buttonId, guildId]
+      );
+
+      if (!button) {
+        return res.json({ success: false, error: "Bouton non trouvé" });
+      }
+
+      await new Promise((resolve, reject) => {
+        db.run(
+          "UPDATE role_panel_buttons SET role_id = ?, label = ?, emoji = ?, style = ?, enabled = ?, position = ? WHERE id = ?",
+          [roleId, label, emoji || null, style, enabled ? 1 : 0, position, buttonId],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Mettre à jour le message
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ?", [button.panel_id]);
+      const buttons = await db.allAsync("SELECT * FROM role_panel_buttons WHERE panel_id = ?", [button.panel_id]);
+      const { updatePanelMessage } = require('../commands/🔧 Administration/rolepanel');
+      await updatePanelMessage(client, panel, buttons);
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur update panel button:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Supprimer un bouton
+  router.post("/bot/delete-panel-button", express.json(), async (req, res) => {
+    const { guildId, buttonId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      // Vérifier que le bouton appartient à un panel de ce serveur
+      const button = await db.getAsync(
+        `SELECT rpb.*, rp.guild_id FROM role_panel_buttons rpb 
+         JOIN role_panels rp ON rpb.panel_id = rp.id 
+         WHERE rpb.id = ? AND rp.guild_id = ?`,
+        [buttonId, guildId]
+      );
+
+      if (!button) {
+        return res.json({ success: false, error: "Bouton non trouvé" });
+      }
+
+      const panelId = button.panel_id;
+
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM role_panel_buttons WHERE id = ?", [buttonId], (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      // Mettre à jour le message
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ?", [panelId]);
+      const buttons = await db.allAsync("SELECT * FROM role_panel_buttons WHERE panel_id = ?", [panelId]);
+      const { updatePanelMessage } = require('../commands/🔧 Administration/rolepanel');
+      await updatePanelMessage(client, panel, buttons);
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur delete panel button:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Publier/actualiser un panel
+  router.post("/bot/publish-role-panel", express.json(), async (req, res) => {
+    const { guildId, panelId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const panel = await db.getAsync("SELECT * FROM role_panels WHERE id = ? AND guild_id = ?", [panelId, guildId]);
+      if (!panel) {
+        return res.json({ success: false, error: "Panel non trouvé" });
+      }
+
+      const buttons = await db.allAsync("SELECT * FROM role_panel_buttons WHERE panel_id = ?", [panelId]);
+
+      const { updatePanelMessage } = require('../commands/🔧 Administration/rolepanel');
+      const messageId = await updatePanelMessage(client, panel, buttons);
+
+      if (messageId) {
+        res.json({ success: true, messageId });
+      } else {
+        res.json({ success: false, error: "Erreur lors de la publication" });
+      }
+
+    } catch (err) {
+      console.error("Erreur publish role panel:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use("/api", router);
 };
