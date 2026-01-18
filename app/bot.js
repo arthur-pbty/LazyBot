@@ -1,8 +1,16 @@
 const db = require("./db");
 
-const { Client, GatewayIntentBits, Events } = require("discord.js");
+const { Client, GatewayIntentBits, Events, Partials } = require("discord.js");
 
-const client = new Client({ intents: Object.values(GatewayIntentBits) });
+const client = new Client({ 
+  intents: Object.values(GatewayIntentBits),
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.GuildMember,
+    Partials.User
+  ]
+});
 
 require("./loader/events.js")(client);
 require("./loader/commands.js")(client);

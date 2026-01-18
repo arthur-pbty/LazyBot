@@ -1281,5 +1281,321 @@ module.exports = (app, db, client) => {
     }
   });
 
+  // ===== LOGS SYSTEM =====
+
+  // Types de logs disponibles
+  const LOG_TYPES = [
+    { key: 'moderation', name: '📋 Modération', channelName: '📋・moderation-logs', description: 'Bans, kicks, timeouts, warns' },
+    { key: 'voice', name: '🔊 Vocal', channelName: '🔊・voice-logs', description: 'Connexions/déconnexions vocales' },
+    { key: 'messages', name: '💬 Messages', channelName: '💬・messages-logs', description: 'Messages édités/supprimés' },
+    { key: 'members', name: '👥 Membres', channelName: '👥・members-logs', description: 'Arrivées/départs, rôles, pseudos' },
+    { key: 'channels', name: '📁 Salons', channelName: '📁・channels-logs', description: 'Création/suppression de salons' },
+    { key: 'roles', name: '🎭 Rôles', channelName: '🎭・roles-logs', description: 'Création/modification de rôles' },
+    { key: 'invites', name: '🔗 Invitations', channelName: '🔗・invites-logs', description: 'Création/utilisation d\'invitations' },
+    { key: 'server', name: '⚙️ Serveur', channelName: '⚙️・server-logs', description: 'Modifications du serveur' }
+  ];
+
+  // Obtenir la config des logs
+  router.get("/bot/get-logs-config/:guildId", async (req, res) => {
+    const { guildId } = req.params;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    try {
+      const row = await db.getAsync(
+        "SELECT * FROM logs_config WHERE guild_id = ?",
+        [guildId]
+      );
+
+      const guild = client.guilds.cache.get(guildId);
+      const categories = guild ? guild.channels.cache
+        .filter(c => c.type === 4)
+        .map(c => ({ id: c.id, name: c.name })) : [];
+
+      res.json({
+        success: true,
+        config: row || { enabled: false },
+        categories,
+        logTypes: LOG_TYPES
+      });
+
+    } catch (err) {
+      console.error("Erreur get logs config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Sauvegarder la config des logs ET créer les salons
+  router.post("/bot/save-logs-config", express.json(), async (req, res) => {
+    const { guildId, enabled, categoryId, enabledLogs } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        return res.status(404).json({ success: false, error: "Serveur non trouvé" });
+      }
+
+      // Récupérer l'ancienne config
+      let oldConfig = await db.getAsync("SELECT * FROM logs_config WHERE guild_id = ?", [guildId]);
+
+      // Préparer les nouvelles valeurs
+      const newConfig = {
+        guild_id: guildId,
+        enabled: enabled ? 1 : 0,
+        category_id: categoryId || null,
+        moderation_enabled: 0, moderation_channel_id: oldConfig?.moderation_channel_id || null,
+        voice_enabled: 0, voice_channel_id: oldConfig?.voice_channel_id || null,
+        messages_enabled: 0, messages_channel_id: oldConfig?.messages_channel_id || null,
+        members_enabled: 0, members_channel_id: oldConfig?.members_channel_id || null,
+        channels_enabled: 0, channels_channel_id: oldConfig?.channels_channel_id || null,
+        roles_enabled: 0, roles_channel_id: oldConfig?.roles_channel_id || null,
+        invites_enabled: 0, invites_channel_id: oldConfig?.invites_channel_id || null,
+        server_enabled: 0, server_channel_id: oldConfig?.server_channel_id || null
+      };
+
+      // Créer/récupérer la catégorie si pas déjà sélectionnée
+      let category;
+      if (categoryId) {
+        category = guild.channels.cache.get(categoryId);
+      } else if (enabled && enabledLogs && enabledLogs.length > 0) {
+        // Créer une nouvelle catégorie pour les logs
+        category = await guild.channels.create({
+          name: '📜 LOGS',
+          type: 4, // CategoryChannel
+          permissionOverwrites: [
+            {
+              id: guild.id,
+              deny: ['ViewChannel']
+            },
+            {
+              id: client.user.id,
+              allow: ['ViewChannel', 'SendMessages', 'EmbedLinks']
+            }
+          ]
+        });
+        newConfig.category_id = category.id;
+      }
+
+      // Pour chaque type de log activé, créer le salon si nécessaire
+      if (enabled && enabledLogs && category) {
+        for (const logKey of enabledLogs) {
+          const logType = LOG_TYPES.find(lt => lt.key === logKey);
+          if (!logType) continue;
+
+          const enabledField = `${logKey}_enabled`;
+          const channelField = `${logKey}_channel_id`;
+          
+          newConfig[enabledField] = 1;
+
+          // Vérifier si le salon existe déjà
+          let existingChannel = newConfig[channelField] ? 
+            guild.channels.cache.get(newConfig[channelField]) : null;
+
+          if (!existingChannel) {
+            // Créer le salon
+            const newChannel = await guild.channels.create({
+              name: logType.channelName,
+              type: 0, // TextChannel
+              parent: category.id,
+              permissionOverwrites: [
+                {
+                  id: guild.id,
+                  deny: ['ViewChannel']
+                },
+                {
+                  id: client.user.id,
+                  allow: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles']
+                }
+              ]
+            });
+            newConfig[channelField] = newChannel.id;
+          }
+        }
+      }
+
+      // Désactiver les logs non sélectionnés (mais garder les salons)
+      if (enabledLogs) {
+        for (const logType of LOG_TYPES) {
+          if (!enabledLogs.includes(logType.key)) {
+            newConfig[`${logType.key}_enabled`] = 0;
+          }
+        }
+      }
+
+      // Sauvegarder en base
+      await new Promise((resolve, reject) => {
+        db.run(`
+          INSERT INTO logs_config (
+            guild_id, enabled, category_id,
+            moderation_enabled, moderation_channel_id,
+            voice_enabled, voice_channel_id,
+            messages_enabled, messages_channel_id,
+            members_enabled, members_channel_id,
+            channels_enabled, channels_channel_id,
+            roles_enabled, roles_channel_id,
+            invites_enabled, invites_channel_id,
+            server_enabled, server_channel_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(guild_id) DO UPDATE SET
+            enabled = ?, category_id = ?,
+            moderation_enabled = ?, moderation_channel_id = ?,
+            voice_enabled = ?, voice_channel_id = ?,
+            messages_enabled = ?, messages_channel_id = ?,
+            members_enabled = ?, members_channel_id = ?,
+            channels_enabled = ?, channels_channel_id = ?,
+            roles_enabled = ?, roles_channel_id = ?,
+            invites_enabled = ?, invites_channel_id = ?,
+            server_enabled = ?, server_channel_id = ?
+        `, [
+          newConfig.guild_id, newConfig.enabled, newConfig.category_id,
+          newConfig.moderation_enabled, newConfig.moderation_channel_id,
+          newConfig.voice_enabled, newConfig.voice_channel_id,
+          newConfig.messages_enabled, newConfig.messages_channel_id,
+          newConfig.members_enabled, newConfig.members_channel_id,
+          newConfig.channels_enabled, newConfig.channels_channel_id,
+          newConfig.roles_enabled, newConfig.roles_channel_id,
+          newConfig.invites_enabled, newConfig.invites_channel_id,
+          newConfig.server_enabled, newConfig.server_channel_id,
+          // ON CONFLICT values
+          newConfig.enabled, newConfig.category_id,
+          newConfig.moderation_enabled, newConfig.moderation_channel_id,
+          newConfig.voice_enabled, newConfig.voice_channel_id,
+          newConfig.messages_enabled, newConfig.messages_channel_id,
+          newConfig.members_enabled, newConfig.members_channel_id,
+          newConfig.channels_enabled, newConfig.channels_channel_id,
+          newConfig.roles_enabled, newConfig.roles_channel_id,
+          newConfig.invites_enabled, newConfig.invites_channel_id,
+          newConfig.server_enabled, newConfig.server_channel_id
+        ], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ 
+        success: true, 
+        categoryId: newConfig.category_id,
+        channels: {
+          moderation: newConfig.moderation_channel_id,
+          voice: newConfig.voice_channel_id,
+          messages: newConfig.messages_channel_id,
+          members: newConfig.members_channel_id,
+          channels: newConfig.channels_channel_id,
+          roles: newConfig.roles_channel_id,
+          invites: newConfig.invites_channel_id,
+          server: newConfig.server_channel_id
+        }
+      });
+
+    } catch (err) {
+      console.error("Erreur save logs config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Supprimer tous les salons de logs
+  router.post("/bot/delete-logs-channels", express.json(), async (req, res) => {
+    const { guildId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        return res.status(404).json({ success: false, error: "Serveur non trouvé" });
+      }
+
+      const config = await db.getAsync("SELECT * FROM logs_config WHERE guild_id = ?", [guildId]);
+      if (!config) {
+        return res.json({ success: true });
+      }
+
+      // Supprimer tous les salons de logs
+      const channelIds = [
+        config.moderation_channel_id,
+        config.voice_channel_id,
+        config.messages_channel_id,
+        config.members_channel_id,
+        config.channels_channel_id,
+        config.roles_channel_id,
+        config.invites_channel_id,
+        config.server_channel_id
+      ].filter(Boolean);
+
+      for (const channelId of channelIds) {
+        const channel = guild.channels.cache.get(channelId);
+        if (channel) {
+          try {
+            await channel.delete("Suppression du système de logs");
+          } catch (e) {
+            console.error(`Erreur suppression salon ${channelId}:`, e.message);
+          }
+        }
+      }
+
+      // Supprimer la catégorie si elle a été créée par le bot
+      if (config.category_id) {
+        const category = guild.channels.cache.get(config.category_id);
+        if (category && category.children.cache.size === 0) {
+          try {
+            await category.delete("Suppression du système de logs");
+          } catch (e) {
+            console.error(`Erreur suppression catégorie:`, e.message);
+          }
+        }
+      }
+
+      // Reset la config en base
+      await new Promise((resolve, reject) => {
+        db.run(`
+          UPDATE logs_config SET
+            enabled = 0, category_id = NULL,
+            moderation_enabled = 0, moderation_channel_id = NULL,
+            voice_enabled = 0, voice_channel_id = NULL,
+            messages_enabled = 0, messages_channel_id = NULL,
+            members_enabled = 0, members_channel_id = NULL,
+            channels_enabled = 0, channels_channel_id = NULL,
+            roles_enabled = 0, roles_channel_id = NULL,
+            invites_enabled = 0, invites_channel_id = NULL,
+            server_enabled = 0, server_channel_id = NULL
+          WHERE guild_id = ?
+        `, [guildId], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur delete logs channels:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use("/api", router);
 };

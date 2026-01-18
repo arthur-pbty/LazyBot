@@ -1,9 +1,33 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db");
+const { sendLog } = require("../fonctions/sendLog");
 
 module.exports = {
   name: Events.GuildMemberAdd,
   async execute(client, member) {
+    // ===== LOG MEMBRE REJOINT =====
+    const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
+    const accountAgeStr = accountAge < 1 ? 'Moins d\'un jour' : 
+                          accountAge < 7 ? `${accountAge} jours ⚠️` :
+                          accountAge < 30 ? `${accountAge} jours` :
+                          accountAge < 365 ? `${Math.floor(accountAge / 30)} mois` :
+                          `${Math.floor(accountAge / 365)} ans`;
+
+    await sendLog(client, member.guild.id, 'members', {
+      action: 'join',
+      title: '📥 Membre rejoint',
+      description: `**${member.user.tag}** a rejoint le serveur.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '📊 Membres', value: `${member.guild.memberCount}`, inline: true },
+        { name: '📅 Compte créé', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+        { name: '⏳ Âge du compte', value: accountAgeStr, inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
+
+    // ===== MESSAGE DE BIENVENUE =====
     db.get(
       "SELECT enabled, channel_id, message FROM welcome_config WHERE guild_id = ?",
       [member.guild.id],
@@ -31,6 +55,8 @@ module.exports = {
         }
       }
     );
+
+    // ===== AUTOROLE =====
     db.get(
       "SELECT enabled, role_id FROM autorole_newuser_config WHERE guild_id = ?",
       [member.guild.id],

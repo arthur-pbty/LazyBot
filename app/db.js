@@ -214,6 +214,28 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_user_activity_stats_date ON user_activity_stats(guild_id, user_id, date);
 
+  CREATE TABLE IF NOT EXISTS logs_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    category_id TEXT,
+    moderation_enabled INTEGER NOT NULL DEFAULT 0,
+    moderation_channel_id TEXT,
+    voice_enabled INTEGER NOT NULL DEFAULT 0,
+    voice_channel_id TEXT,
+    messages_enabled INTEGER NOT NULL DEFAULT 0,
+    messages_channel_id TEXT,
+    members_enabled INTEGER NOT NULL DEFAULT 0,
+    members_channel_id TEXT,
+    channels_enabled INTEGER NOT NULL DEFAULT 0,
+    channels_channel_id TEXT,
+    roles_enabled INTEGER NOT NULL DEFAULT 0,
+    roles_channel_id TEXT,
+    invites_enabled INTEGER NOT NULL DEFAULT 0,
+    invites_channel_id TEXT,
+    server_enabled INTEGER NOT NULL DEFAULT 0,
+    server_channel_id TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS scheduled_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id TEXT NOT NULL,

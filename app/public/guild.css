@@ -1035,3 +1035,134 @@ body {
   object-fit: cover;
   display: none;
 }
+
+/* ===== Logs System ===== */
+.logs-types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.log-type-card {
+  background: var(--bg-dark);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.log-type-card:hover {
+  border-color: var(--primary-color);
+  background: rgba(88, 101, 242, 0.05);
+}
+
+.log-type-card.active {
+  border-color: var(--primary-color);
+  background: rgba(88, 101, 242, 0.1);
+}
+
+.log-type-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.log-type-checkbox input[type="checkbox"] {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.log-type-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.log-type-info {
+  flex: 1;
+}
+
+.log-type-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.log-type-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.log-type-status {
+  font-size: 1rem;
+  margin-left: auto;
+}
+
+.logs-channels-preview {
+  background: var(--bg-dark);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.log-channel-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.log-channel-item:last-child {
+  border-bottom: none;
+}
+
+.log-channel-icon {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.log-channel-name {
+  flex: 1;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.log-channel-status {
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.log-channel-status.created {
+  background: rgba(87, 242, 135, 0.15);
+  color: #57F287;
+}
+
+.log-channel-status.pending {
+  background: rgba(240, 178, 50, 0.15);
+  color: #F0B232;
+}
+
+.btn-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn-danger {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+

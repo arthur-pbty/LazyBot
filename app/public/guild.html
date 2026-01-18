@@ -74,6 +74,10 @@
             <span class="nav-item-icon">🤖</span>
             Apparence du bot
           </a>
+          <a class="nav-item" data-section="logs">
+            <span class="nav-item-icon">📜</span>
+            Logs
+          </a>
         </div>
       </nav>
       
@@ -1113,6 +1117,66 @@
           </div>
         </section>
 
+        <!-- Section: Logs -->
+        <section class="config-section" id="section-logs">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">📜</span>
+                <h3>Système de Logs</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="logs-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <p class="text-muted" style="margin-bottom: 1.5rem;">
+                Activez les logs pour suivre toutes les actions sur votre serveur. Le bot créera automatiquement les salons de logs dans une catégorie dédiée.
+              </p>
+
+              <!-- Catégorie existante ou nouvelle -->
+              <div class="form-group">
+                <label class="form-label">📁 Catégorie pour les logs</label>
+                <select class="form-select" id="logs-category">
+                  <option value="">📜 Créer une nouvelle catégorie "LOGS"</option>
+                </select>
+                <small class="text-muted">Sélectionnez une catégorie existante ou laissez vide pour en créer une nouvelle automatiquement.</small>
+              </div>
+
+              <!-- Types de logs -->
+              <div class="form-group">
+                <label class="form-label">🔧 Types de logs à activer</label>
+                <p class="text-muted" style="margin-bottom: 1rem;">Sélectionnez les types de logs que vous souhaitez activer. Un salon sera créé pour chaque type activé.</p>
+                
+                <div class="logs-types-grid" id="logs-types-container">
+                  <!-- Généré dynamiquement par JS -->
+                </div>
+              </div>
+
+              <!-- Aperçu des salons -->
+              <div class="form-group" id="logs-preview-container" style="display: none;">
+                <label class="form-label">👁️ Salons de logs</label>
+                <div class="logs-channels-preview" id="logs-channels-preview">
+                  <!-- Généré dynamiquement -->
+                </div>
+              </div>
+
+            </div>
+            <div class="config-card-footer">
+              <div id="status-logs-form" class="status-message"></div>
+              <div class="btn-group">
+                <button type="button" class="btn btn-danger" id="logs-delete-btn" style="display: none;">
+                  🗑️ Supprimer tous les salons
+                </button>
+                <button type="button" class="btn btn-primary" id="logs-save-btn">
+                  💾 Sauvegarder
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -1133,5 +1197,6 @@
     <script src="/guild/scheduledMessagesForm.js"></script>
     <script src="/guild/sendMessageForm.js"></script>
     <script src="/guild/botAppearanceForm.js"></script>
+    <script src="/guild/logsForm.js"></script>
   </body>
 </html>

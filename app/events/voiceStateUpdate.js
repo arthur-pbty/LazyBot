@@ -1,5 +1,6 @@
 const { Events, ChannelType, PermissionFlagsBits } = require("discord.js");
 const db = require("../db");
+const { sendLog } = require("../fonctions/sendLog");
 
 // Store voice join times and intervals for economy
 const voiceJoinTimes = new Map(); // guildId_oderId -> timestamp
@@ -10,6 +11,9 @@ module.exports = {
   async execute(client, oldState, newState) {
     // ===== PRIVATE ROOM (TEMP VOICE CHANNELS) =====
     await handlePrivateRoom(client, oldState, newState);
+
+    // ===== VOICE LOGS =====
+    await handleVoiceLogs(client, oldState, newState);
 
     if (newState.member.user.bot) return;
     
@@ -270,5 +274,88 @@ async function trackVoiceTime(guildId, userId, oldState, newState) {
   else if (newState.channelId && oldState.channelId && newState.channelId !== oldState.channelId) {
     // Update session timestamp (continue tracking)
     // No action needed, session continues
+  }
+}
+
+// ===== VOICE LOGS =====
+async function handleVoiceLogs(client, oldState, newState) {
+  // Ignorer les bots
+  if (newState.member?.user?.bot) return;
+
+  const guild = newState.guild;
+  const member = newState.member;
+  if (!member) return;
+
+  // Utilisateur rejoint un salon vocal
+  if (newState.channelId && !oldState.channelId) {
+    await sendLog(client, guild.id, 'voice', {
+      action: 'join',
+      title: '🔊 Connexion vocale',
+      description: `**${member.user.tag}** a rejoint un salon vocal.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '🔊 Salon', value: `${newState.channel}`, inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
+  }
+  // Utilisateur quitte un salon vocal
+  else if (!newState.channelId && oldState.channelId) {
+    await sendLog(client, guild.id, 'voice', {
+      action: 'leave',
+      title: '🔇 Déconnexion vocale',
+      description: `**${member.user.tag}** a quitté un salon vocal.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '🔊 Salon', value: `${oldState.channel?.name || 'Inconnu'}`, inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
+  }
+  // Utilisateur change de salon
+  else if (newState.channelId && oldState.channelId && newState.channelId !== oldState.channelId) {
+    await sendLog(client, guild.id, 'voice', {
+      action: 'move',
+      title: '🔀 Changement de salon',
+      description: `**${member.user.tag}** a changé de salon vocal.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '📤 Ancien salon', value: `${oldState.channel?.name || 'Inconnu'}`, inline: true },
+        { name: '📥 Nouveau salon', value: `${newState.channel}`, inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
+  }
+
+  // Vérifier les changements de mute/deafen serveur
+  if (oldState.serverMute !== newState.serverMute) {
+    await sendLog(client, guild.id, 'voice', {
+      action: newState.serverMute ? 'timeout' : 'untimeout',
+      title: newState.serverMute ? '🔇 Mute serveur activé' : '🔊 Mute serveur désactivé',
+      description: `**${member.user.tag}** a été ${newState.serverMute ? 'muté' : 'démuté'} par le serveur.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '🔊 Salon', value: newState.channel ? `${newState.channel}` : 'N/A', inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
+  }
+
+  if (oldState.serverDeaf !== newState.serverDeaf) {
+    await sendLog(client, guild.id, 'voice', {
+      action: newState.serverDeaf ? 'timeout' : 'untimeout',
+      title: newState.serverDeaf ? '🔇 Sourd serveur activé' : '🔊 Sourd serveur désactivé',
+      description: `**${member.user.tag}** a été rendu ${newState.serverDeaf ? 'sourd' : 'non-sourd'} par le serveur.`,
+      fields: [
+        { name: '👤 Membre', value: `${member} (${member.user.tag})`, inline: true },
+        { name: '🔊 Salon', value: newState.channel ? `${newState.channel}` : 'N/A', inline: true }
+      ],
+      thumbnail: member.user.displayAvatarURL({ size: 128 }),
+      user: member.user
+    });
   }
 }
