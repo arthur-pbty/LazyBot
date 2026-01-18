@@ -1597,5 +1597,445 @@ module.exports = (app, db, client) => {
     }
   });
 
+  // =============================================
+  // ========== ANTI-RAID CONFIG API =============
+  // =============================================
+
+  // Récupérer la config anti-raid
+  router.get("/bot/get-antiraid-config", async (req, res) => {
+    const { guildId } = req.query;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      let config = await db.getAsync("SELECT * FROM antiraid_config WHERE guild_id = ?", [guildId]);
+      
+      if (!config) {
+        // Créer config par défaut
+        await new Promise((resolve, reject) => {
+          db.run("INSERT INTO antiraid_config (guild_id) VALUES (?)", [guildId], function(err) {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        config = await db.getAsync("SELECT * FROM antiraid_config WHERE guild_id = ?", [guildId]);
+      }
+
+      // Récupérer les salons et rôles du serveur
+      const guild = client.guilds.cache.get(guildId);
+      const channels = guild ? guild.channels.cache
+        .filter(c => c.type === 0)
+        .map(c => ({ id: c.id, name: c.name })) : [];
+      const roles = guild ? guild.roles.cache
+        .filter(r => r.id !== guild.id && !r.managed)
+        .sort((a, b) => b.position - a.position)
+        .map(r => ({ id: r.id, name: r.name, color: r.hexColor })) : [];
+
+      res.json({
+        success: true,
+        config,
+        channels,
+        roles
+      });
+
+    } catch (err) {
+      console.error("Erreur get antiraid config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Sauvegarder la config anti-raid
+  router.post("/bot/save-antiraid-config", express.json(), async (req, res) => {
+    const { guildId, config } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(`
+          INSERT INTO antiraid_config (
+            guild_id, enabled, log_channel_id,
+            antilink_enabled, antilink_action, antilink_whitelist_domains, antilink_exclude_channels, antilink_exclude_roles, antilink_warn_message,
+            antiinvite_enabled, antiinvite_action, antiinvite_allow_own_server, antiinvite_exclude_channels, antiinvite_exclude_roles,
+            antispam_enabled, antispam_max_messages, antispam_interval_seconds, antispam_action, antispam_mute_duration_minutes, antispam_exclude_channels, antispam_exclude_roles,
+            antidupe_enabled, antidupe_max_duplicates, antidupe_interval_seconds, antidupe_action, antidupe_exclude_channels, antidupe_exclude_roles,
+            antimention_enabled, antimention_max_mentions, antimention_action, antimention_exclude_channels, antimention_exclude_roles,
+            antiemoji_enabled, antiemoji_max_emojis, antiemoji_action, antiemoji_exclude_channels, antiemoji_exclude_roles,
+            anticaps_enabled, anticaps_max_percent, anticaps_min_length, anticaps_action, anticaps_exclude_channels, anticaps_exclude_roles,
+            antinewline_enabled, antinewline_max_lines, antinewline_action, antinewline_exclude_channels, antinewline_exclude_roles,
+            antibot_enabled, antibot_min_account_age_days, antibot_no_avatar_action, antibot_suspicious_name_action, antibot_action,
+            antimassj_enabled, antimassj_max_joins, antimassj_interval_seconds, antimassj_action,
+            antibadwords_enabled, antibadwords_action, antibadwords_words, antibadwords_exclude_channels, antibadwords_exclude_roles, antibadwords_warn_message
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(guild_id) DO UPDATE SET
+            enabled = excluded.enabled,
+            log_channel_id = excluded.log_channel_id,
+            antilink_enabled = excluded.antilink_enabled,
+            antilink_action = excluded.antilink_action,
+            antilink_whitelist_domains = excluded.antilink_whitelist_domains,
+            antilink_exclude_channels = excluded.antilink_exclude_channels,
+            antilink_exclude_roles = excluded.antilink_exclude_roles,
+            antilink_warn_message = excluded.antilink_warn_message,
+            antiinvite_enabled = excluded.antiinvite_enabled,
+            antiinvite_action = excluded.antiinvite_action,
+            antiinvite_allow_own_server = excluded.antiinvite_allow_own_server,
+            antiinvite_exclude_channels = excluded.antiinvite_exclude_channels,
+            antiinvite_exclude_roles = excluded.antiinvite_exclude_roles,
+            antispam_enabled = excluded.antispam_enabled,
+            antispam_max_messages = excluded.antispam_max_messages,
+            antispam_interval_seconds = excluded.antispam_interval_seconds,
+            antispam_action = excluded.antispam_action,
+            antispam_mute_duration_minutes = excluded.antispam_mute_duration_minutes,
+            antispam_exclude_channels = excluded.antispam_exclude_channels,
+            antispam_exclude_roles = excluded.antispam_exclude_roles,
+            antidupe_enabled = excluded.antidupe_enabled,
+            antidupe_max_duplicates = excluded.antidupe_max_duplicates,
+            antidupe_interval_seconds = excluded.antidupe_interval_seconds,
+            antidupe_action = excluded.antidupe_action,
+            antidupe_exclude_channels = excluded.antidupe_exclude_channels,
+            antidupe_exclude_roles = excluded.antidupe_exclude_roles,
+            antimention_enabled = excluded.antimention_enabled,
+            antimention_max_mentions = excluded.antimention_max_mentions,
+            antimention_action = excluded.antimention_action,
+            antimention_exclude_channels = excluded.antimention_exclude_channels,
+            antimention_exclude_roles = excluded.antimention_exclude_roles,
+            antiemoji_enabled = excluded.antiemoji_enabled,
+            antiemoji_max_emojis = excluded.antiemoji_max_emojis,
+            antiemoji_action = excluded.antiemoji_action,
+            antiemoji_exclude_channels = excluded.antiemoji_exclude_channels,
+            antiemoji_exclude_roles = excluded.antiemoji_exclude_roles,
+            anticaps_enabled = excluded.anticaps_enabled,
+            anticaps_max_percent = excluded.anticaps_max_percent,
+            anticaps_min_length = excluded.anticaps_min_length,
+            anticaps_action = excluded.anticaps_action,
+            anticaps_exclude_channels = excluded.anticaps_exclude_channels,
+            anticaps_exclude_roles = excluded.anticaps_exclude_roles,
+            antinewline_enabled = excluded.antinewline_enabled,
+            antinewline_max_lines = excluded.antinewline_max_lines,
+            antinewline_action = excluded.antinewline_action,
+            antinewline_exclude_channels = excluded.antinewline_exclude_channels,
+            antinewline_exclude_roles = excluded.antinewline_exclude_roles,
+            antibot_enabled = excluded.antibot_enabled,
+            antibot_min_account_age_days = excluded.antibot_min_account_age_days,
+            antibot_no_avatar_action = excluded.antibot_no_avatar_action,
+            antibot_suspicious_name_action = excluded.antibot_suspicious_name_action,
+            antibot_action = excluded.antibot_action,
+            antimassj_enabled = excluded.antimassj_enabled,
+            antimassj_max_joins = excluded.antimassj_max_joins,
+            antimassj_interval_seconds = excluded.antimassj_interval_seconds,
+            antimassj_action = excluded.antimassj_action,
+            antibadwords_enabled = excluded.antibadwords_enabled,
+            antibadwords_action = excluded.antibadwords_action,
+            antibadwords_words = excluded.antibadwords_words,
+            antibadwords_exclude_channels = excluded.antibadwords_exclude_channels,
+            antibadwords_exclude_roles = excluded.antibadwords_exclude_roles,
+            antibadwords_warn_message = excluded.antibadwords_warn_message
+        `, [
+          guildId,
+          config.enabled ? 1 : 0,
+          config.log_channel_id || null,
+          // Anti-Link
+          config.antilink_enabled ? 1 : 0,
+          config.antilink_action || 'delete',
+          JSON.stringify(config.antilink_whitelist_domains || []),
+          JSON.stringify(config.antilink_exclude_channels || []),
+          JSON.stringify(config.antilink_exclude_roles || []),
+          config.antilink_warn_message || '⚠️ Les liens ne sont pas autorisés ici.',
+          // Anti-Invite
+          config.antiinvite_enabled ? 1 : 0,
+          config.antiinvite_action || 'delete',
+          config.antiinvite_allow_own_server ? 1 : 0,
+          JSON.stringify(config.antiinvite_exclude_channels || []),
+          JSON.stringify(config.antiinvite_exclude_roles || []),
+          // Anti-Spam
+          config.antispam_enabled ? 1 : 0,
+          config.antispam_max_messages || 5,
+          config.antispam_interval_seconds || 5,
+          config.antispam_action || 'mute',
+          config.antispam_mute_duration_minutes || 10,
+          JSON.stringify(config.antispam_exclude_channels || []),
+          JSON.stringify(config.antispam_exclude_roles || []),
+          // Anti-Duplicate
+          config.antidupe_enabled ? 1 : 0,
+          config.antidupe_max_duplicates || 3,
+          config.antidupe_interval_seconds || 30,
+          config.antidupe_action || 'delete',
+          JSON.stringify(config.antidupe_exclude_channels || []),
+          JSON.stringify(config.antidupe_exclude_roles || []),
+          // Anti-Mention
+          config.antimention_enabled ? 1 : 0,
+          config.antimention_max_mentions || 5,
+          config.antimention_action || 'delete',
+          JSON.stringify(config.antimention_exclude_channels || []),
+          JSON.stringify(config.antimention_exclude_roles || []),
+          // Anti-Emoji
+          config.antiemoji_enabled ? 1 : 0,
+          config.antiemoji_max_emojis || 10,
+          config.antiemoji_action || 'delete',
+          JSON.stringify(config.antiemoji_exclude_channels || []),
+          JSON.stringify(config.antiemoji_exclude_roles || []),
+          // Anti-Caps
+          config.anticaps_enabled ? 1 : 0,
+          config.anticaps_max_percent || 70,
+          config.anticaps_min_length || 10,
+          config.anticaps_action || 'delete',
+          JSON.stringify(config.anticaps_exclude_channels || []),
+          JSON.stringify(config.anticaps_exclude_roles || []),
+          // Anti-Newline
+          config.antinewline_enabled ? 1 : 0,
+          config.antinewline_max_lines || 15,
+          config.antinewline_action || 'delete',
+          JSON.stringify(config.antinewline_exclude_channels || []),
+          JSON.stringify(config.antinewline_exclude_roles || []),
+          // Anti-Bot
+          config.antibot_enabled ? 1 : 0,
+          config.antibot_min_account_age_days || 7,
+          config.antibot_no_avatar_action ? 1 : 0,
+          config.antibot_suspicious_name_action ? 1 : 0,
+          config.antibot_action || 'kick',
+          // Anti-Mass Join
+          config.antimassj_enabled ? 1 : 0,
+          config.antimassj_max_joins || 10,
+          config.antimassj_interval_seconds || 10,
+          config.antimassj_action || 'kick',
+          // Anti-Badwords
+          config.antibadwords_enabled ? 1 : 0,
+          config.antibadwords_action || 'delete',
+          JSON.stringify(config.antibadwords_words || []),
+          JSON.stringify(config.antibadwords_exclude_channels || []),
+          JSON.stringify(config.antibadwords_exclude_roles || []),
+          config.antibadwords_warn_message || '⚠️ Les insultes et gros mots ne sont pas autorisés.'
+        ], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur save antiraid config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // =============================================
+  // ========== WARNINGS CONFIG API ==============
+  // =============================================
+
+  // Récupérer la config des warnings
+  router.get("/bot/get-warnings-config", async (req, res) => {
+    const { guildId } = req.query;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      let config = await db.getAsync("SELECT * FROM warnings_config WHERE guild_id = ?", [guildId]);
+      
+      if (!config) {
+        // Créer config par défaut
+        await new Promise((resolve, reject) => {
+          db.run("INSERT INTO warnings_config (guild_id) VALUES (?)", [guildId], function(err) {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        config = await db.getAsync("SELECT * FROM warnings_config WHERE guild_id = ?", [guildId]);
+      }
+
+      // Récupérer les salons du serveur
+      const guild = client.guilds.cache.get(guildId);
+      const channels = guild ? guild.channels.cache
+        .filter(c => c.type === 0)
+        .map(c => ({ id: c.id, name: c.name })) : [];
+
+      res.json({
+        success: true,
+        config,
+        channels
+      });
+
+    } catch (err) {
+      console.error("Erreur get warnings config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Sauvegarder la config des warnings
+  router.post("/bot/save-warnings-config", express.json(), async (req, res) => {
+    const { guildId, config } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(`
+          INSERT INTO warnings_config (
+            guild_id, enabled,
+            warn1_action, warn1_duration,
+            warn2_action, warn2_duration,
+            warn3_action, warn3_duration,
+            warn4_action, warn4_duration,
+            warn5_action, warn5_duration,
+            decay_enabled, decay_days,
+            notify_user, notify_channel_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(guild_id) DO UPDATE SET
+            enabled = excluded.enabled,
+            warn1_action = excluded.warn1_action,
+            warn1_duration = excluded.warn1_duration,
+            warn2_action = excluded.warn2_action,
+            warn2_duration = excluded.warn2_duration,
+            warn3_action = excluded.warn3_action,
+            warn3_duration = excluded.warn3_duration,
+            warn4_action = excluded.warn4_action,
+            warn4_duration = excluded.warn4_duration,
+            warn5_action = excluded.warn5_action,
+            warn5_duration = excluded.warn5_duration,
+            decay_enabled = excluded.decay_enabled,
+            decay_days = excluded.decay_days,
+            notify_user = excluded.notify_user,
+            notify_channel_id = excluded.notify_channel_id
+        `, [
+          guildId,
+          config.enabled ? 1 : 0,
+          config.warn1_action || 'none',
+          config.warn1_duration || 10,
+          config.warn2_action || 'none',
+          config.warn2_duration || 30,
+          config.warn3_action || 'mute',
+          config.warn3_duration || 60,
+          config.warn4_action || 'kick',
+          config.warn4_duration || 0,
+          config.warn5_action || 'ban',
+          config.warn5_duration || 0,
+          config.decay_enabled ? 1 : 0,
+          config.decay_days || 30,
+          config.notify_user ? 1 : 0,
+          config.notify_channel_id || null
+        ], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur save warnings config:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Récupérer les warnings d'un serveur
+  router.get("/bot/get-warnings-list", async (req, res) => {
+    const { guildId, userId } = req.query;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      let warnings;
+      if (userId) {
+        warnings = await db.allAsync(
+          "SELECT * FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY created_at DESC LIMIT 50",
+          [guildId, userId]
+        );
+      } else {
+        warnings = await db.allAsync(
+          "SELECT * FROM warnings WHERE guild_id = ? ORDER BY created_at DESC LIMIT 100",
+          [guildId]
+        );
+      }
+
+      res.json({ success: true, warnings: warnings || [] });
+
+    } catch (err) {
+      console.error("Erreur get warnings list:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Supprimer un warning
+  router.post("/bot/delete-warning", express.json(), async (req, res) => {
+    const { guildId, warnId } = req.body;
+
+    if (!req.session.guilds) {
+      return res.status(401).json({ success: false, error: "Non connecté" });
+    }
+
+    const isAdmin = req.session.guilds.find(
+      g => g.id === guildId && (BigInt(g.permissions) & 0x8n) === 0x8n
+    );
+
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, error: "Permission refusée" });
+    }
+
+    try {
+      await new Promise((resolve, reject) => {
+        db.run("DELETE FROM warnings WHERE id = ? AND guild_id = ?", [warnId, guildId], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      res.json({ success: true });
+
+    } catch (err) {
+      console.error("Erreur delete warning:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use("/api", router);
 };

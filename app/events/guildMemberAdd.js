@@ -1,10 +1,14 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db");
 const { sendLog } = require("../fonctions/sendLog");
+const antiraid = require("../fonctions/antiraid");
 
 module.exports = {
   name: Events.GuildMemberAdd,
   async execute(client, member) {
+    // ===== ANTI-RAID CHECKS =====
+    await antiraid.checkMemberJoin(member, client);
+
     // ===== LOG MEMBRE REJOINT =====
     const accountAge = Math.floor((Date.now() - member.user.createdTimestamp) / (1000 * 60 * 60 * 24));
     const accountAgeStr = accountAge < 1 ? 'Moins d\'un jour' : 

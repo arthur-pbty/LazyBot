@@ -256,6 +256,138 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_nickname_history_user ON nickname_history(guild_id, user_id, changed_at DESC);
 
+  CREATE TABLE IF NOT EXISTS antiraid_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    log_channel_id TEXT,
+    
+    -- Anti-link
+    antilink_enabled INTEGER NOT NULL DEFAULT 0,
+    antilink_action TEXT NOT NULL DEFAULT 'delete',
+    antilink_whitelist_domains TEXT DEFAULT '[]',
+    antilink_exclude_channels TEXT DEFAULT '[]',
+    antilink_exclude_roles TEXT DEFAULT '[]',
+    antilink_warn_message TEXT DEFAULT '⚠️ Les liens ne sont pas autorisés ici.',
+    
+    -- Anti-invite (liens Discord)
+    antiinvite_enabled INTEGER NOT NULL DEFAULT 0,
+    antiinvite_action TEXT NOT NULL DEFAULT 'delete',
+    antiinvite_allow_own_server INTEGER NOT NULL DEFAULT 1,
+    antiinvite_exclude_channels TEXT DEFAULT '[]',
+    antiinvite_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-spam
+    antispam_enabled INTEGER NOT NULL DEFAULT 0,
+    antispam_action TEXT NOT NULL DEFAULT 'mute',
+    antispam_max_messages INTEGER NOT NULL DEFAULT 5,
+    antispam_interval_seconds INTEGER NOT NULL DEFAULT 5,
+    antispam_mute_duration_minutes INTEGER NOT NULL DEFAULT 10,
+    antispam_exclude_channels TEXT DEFAULT '[]',
+    antispam_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-duplicate (messages identiques)
+    antidupe_enabled INTEGER NOT NULL DEFAULT 0,
+    antidupe_action TEXT NOT NULL DEFAULT 'delete',
+    antidupe_max_duplicates INTEGER NOT NULL DEFAULT 3,
+    antidupe_interval_seconds INTEGER NOT NULL DEFAULT 60,
+    antidupe_exclude_channels TEXT DEFAULT '[]',
+    antidupe_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-mass mention
+    antimention_enabled INTEGER NOT NULL DEFAULT 0,
+    antimention_action TEXT NOT NULL DEFAULT 'delete',
+    antimention_max_mentions INTEGER NOT NULL DEFAULT 5,
+    antimention_exclude_channels TEXT DEFAULT '[]',
+    antimention_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-mass emoji
+    antiemoji_enabled INTEGER NOT NULL DEFAULT 0,
+    antiemoji_action TEXT NOT NULL DEFAULT 'delete',
+    antiemoji_max_emojis INTEGER NOT NULL DEFAULT 10,
+    antiemoji_exclude_channels TEXT DEFAULT '[]',
+    antiemoji_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-caps (majuscules)
+    anticaps_enabled INTEGER NOT NULL DEFAULT 0,
+    anticaps_action TEXT NOT NULL DEFAULT 'delete',
+    anticaps_max_percent INTEGER NOT NULL DEFAULT 70,
+    anticaps_min_length INTEGER NOT NULL DEFAULT 10,
+    anticaps_exclude_channels TEXT DEFAULT '[]',
+    anticaps_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-bot join
+    antibot_enabled INTEGER NOT NULL DEFAULT 0,
+    antibot_action TEXT NOT NULL DEFAULT 'kick',
+    antibot_min_account_age_days INTEGER NOT NULL DEFAULT 7,
+    antibot_no_avatar_action INTEGER NOT NULL DEFAULT 0,
+    antibot_suspicious_name_action INTEGER NOT NULL DEFAULT 0,
+    
+    -- Anti-mass join (raid de comptes)
+    antimassj_enabled INTEGER NOT NULL DEFAULT 0,
+    antimassj_action TEXT NOT NULL DEFAULT 'kick',
+    antimassj_max_joins INTEGER NOT NULL DEFAULT 10,
+    antimassj_interval_seconds INTEGER NOT NULL DEFAULT 10,
+    antimassj_lockdown_duration_minutes INTEGER NOT NULL DEFAULT 5,
+    
+    -- Anti-newline spam
+    antinewline_enabled INTEGER NOT NULL DEFAULT 0,
+    antinewline_action TEXT NOT NULL DEFAULT 'delete',
+    antinewline_max_lines INTEGER NOT NULL DEFAULT 15,
+    antinewline_exclude_channels TEXT DEFAULT '[]',
+    antinewline_exclude_roles TEXT DEFAULT '[]',
+    
+    -- Anti-badwords (gros mots)
+    antibadwords_enabled INTEGER NOT NULL DEFAULT 0,
+    antibadwords_action TEXT NOT NULL DEFAULT 'delete',
+    antibadwords_words TEXT DEFAULT '[]',
+    antibadwords_exclude_channels TEXT DEFAULT '[]',
+    antibadwords_exclude_roles TEXT DEFAULT '[]',
+    antibadwords_warn_message TEXT DEFAULT '⚠️ Les insultes et gros mots ne sont pas autorisés.'
+  );
+
+  CREATE TABLE IF NOT EXISTS antiraid_warnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    warning_type TEXT NOT NULL,
+    warned_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_antiraid_warnings ON antiraid_warnings(guild_id, user_id, warning_type, warned_at);
+
+  -- Table des warns utilisateurs
+  CREATE TABLE IF NOT EXISTS warnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    moderator_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    source TEXT DEFAULT 'manual',
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_warnings ON warnings(guild_id, user_id, created_at DESC);
+
+  -- Configuration des sanctions automatiques par warns
+  CREATE TABLE IF NOT EXISTS warnings_config (
+    guild_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    warn1_action TEXT DEFAULT 'none',
+    warn1_duration INTEGER DEFAULT 10,
+    warn2_action TEXT DEFAULT 'none',
+    warn2_duration INTEGER DEFAULT 30,
+    warn3_action TEXT DEFAULT 'mute',
+    warn3_duration INTEGER DEFAULT 60,
+    warn4_action TEXT DEFAULT 'kick',
+    warn4_duration INTEGER DEFAULT 0,
+    warn5_action TEXT DEFAULT 'ban',
+    warn5_duration INTEGER DEFAULT 0,
+    decay_enabled INTEGER NOT NULL DEFAULT 0,
+    decay_days INTEGER DEFAULT 30,
+    notify_user INTEGER NOT NULL DEFAULT 1,
+    notify_channel_id TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS scheduled_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guild_id TEXT NOT NULL,

@@ -1,10 +1,22 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db");
+const antiraid = require("../fonctions/antiraid");
 
 module.exports = {
   name: Events.MessageCreate,
   async execute(client, message) {
     if (message.author.bot) return;
+    if (!message.guild) return;
+    
+    // ===== ANTI-RAID CHECKS =====
+    await antiraid.checkMessage(message, client);
+    
+    // Si le message a été supprimé par l'antiraid, ne pas continuer
+    try {
+      await message.fetch();
+    } catch {
+      return; // Message supprimé
+    }
     
     const guildId = message.guild.id;
     const userId = message.author.id;

@@ -78,6 +78,10 @@
             <span class="nav-item-icon">📜</span>
             Logs
           </a>
+          <a class="nav-item" data-section="antiraid">
+            <span class="nav-item-icon">🛡️</span>
+            Anti-Raid
+          </a>
         </div>
       </nav>
       
@@ -1177,6 +1181,723 @@
           </div>
         </section>
 
+        <!-- Section: Anti-Raid -->
+        <section class="config-section" id="section-antiraid">
+          <div class="config-card">
+            <div class="config-card-header">
+              <div class="config-card-title">
+                <span class="icon">🛡️</span>
+                <h3>Système Anti-Raid</h3>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="antiraid-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="config-card-body">
+              <p class="text-muted" style="margin-bottom: 1.5rem;">
+                Protégez votre serveur contre les raids, le spam et les comportements malveillants. Configurez chaque module individuellement.
+              </p>
+
+              <!-- Salon de logs anti-raid -->
+              <div class="form-group">
+                <label class="form-label">📜 Salon de logs Anti-Raid</label>
+                <select class="form-select" id="antiraid-log-channel">
+                  <option value="">Aucun (pas de logs)</option>
+                </select>
+                <small class="text-muted">Les actions de l'anti-raid seront envoyées dans ce salon.</small>
+              </div>
+
+              <!-- Modules Anti-Raid -->
+              <div class="antiraid-modules">
+                
+                <!-- Anti-Link -->
+                <div class="antiraid-module" id="module-antilink">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">🔗</span>
+                      <span>Anti-Link</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antilink-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les liens externes. Vous pouvez autoriser certains domaines.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antilink-action">
+                          <option value="delete">Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">✅ Domaines autorisés</label>
+                        <input type="text" class="form-input" id="antilink-whitelist" placeholder="youtube.com, twitter.com">
+                        <small class="text-muted">Séparés par des virgules</small>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">💬 Message d'avertissement</label>
+                      <input type="text" class="form-input" id="antilink-warn-message" placeholder="⚠️ Les liens ne sont pas autorisés ici." value="⚠️ Les liens ne sont pas autorisés ici.">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antilink-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antilink-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Invite -->
+                <div class="antiraid-module" id="module-antiinvite">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">📨</span>
+                      <span>Anti-Invite</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antiinvite-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les invitations Discord d'autres serveurs.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antiinvite-action">
+                          <option value="delete">Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                          <input type="checkbox" id="antiinvite-allow-own">
+                          Autoriser les invites de ce serveur
+                        </label>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antiinvite-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antiinvite-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Spam -->
+                <div class="antiraid-module" id="module-antispam">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">⚡</span>
+                      <span>Anti-Spam</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antispam-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Détecte les utilisateurs qui envoient trop de messages rapidement.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">📊 Messages max</label>
+                        <input type="number" class="form-input" id="antispam-max-messages" min="3" max="20" value="5">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⏱️ Intervalle (secondes)</label>
+                        <input type="number" class="form-input" id="antispam-interval" min="1" max="30" value="5">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antispam-action">
+                          <option value="delete">Supprimer les messages</option>
+                          <option value="mute" selected>Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">🔇 Durée du mute (minutes)</label>
+                        <input type="number" class="form-input" id="antispam-mute-duration" min="1" max="1440" value="10">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antispam-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antispam-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Duplicate -->
+                <div class="antiraid-module" id="module-antidupe">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">📋</span>
+                      <span>Anti-Duplicate</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antidupe-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les utilisateurs qui répètent le même message.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🔄 Répétitions max</label>
+                        <input type="number" class="form-input" id="antidupe-max" min="2" max="10" value="3">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⏱️ Intervalle (secondes)</label>
+                        <input type="number" class="form-input" id="antidupe-interval" min="5" max="120" value="30">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antidupe-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antidupe-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antidupe-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Mention -->
+                <div class="antiraid-module" id="module-antimention">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">📢</span>
+                      <span>Anti-Mass Mention</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antimention-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les messages avec trop de mentions.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">📊 Mentions max</label>
+                        <input type="number" class="form-input" id="antimention-max" min="2" max="30" value="5">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antimention-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antimention-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antimention-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Emoji -->
+                <div class="antiraid-module" id="module-antiemoji">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">😀</span>
+                      <span>Anti-Emoji Spam</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antiemoji-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les messages avec trop d'emojis.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">😀 Emojis max</label>
+                        <input type="number" class="form-input" id="antiemoji-max" min="3" max="50" value="10">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antiemoji-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antiemoji-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antiemoji-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Caps -->
+                <div class="antiraid-module" id="module-anticaps">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">🔠</span>
+                      <span>Anti-Caps</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="anticaps-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les messages avec trop de MAJUSCULES.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">📊 % de majuscules max</label>
+                        <input type="number" class="form-input" id="anticaps-max-percent" min="30" max="100" value="70">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">📏 Longueur min (caractères)</label>
+                        <input type="number" class="form-input" id="anticaps-min-length" min="5" max="50" value="10">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="anticaps-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="anticaps-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="anticaps-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Newline -->
+                <div class="antiraid-module" id="module-antinewline">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">📄</span>
+                      <span>Anti-Newline Spam</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antinewline-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les messages avec trop de sauts de ligne.</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">📊 Lignes max</label>
+                        <input type="number" class="form-input" id="antinewline-max" min="5" max="50" value="15">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antinewline-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antinewline-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antinewline-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Bot Join -->
+                <div class="antiraid-module" id="module-antibot">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">🤖</span>
+                      <span>Anti-Bot / Compte suspect</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antibot-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Détecte les comptes suspects (nouveaux comptes, sans avatar, noms suspects).</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">📅 Âge min du compte (jours)</label>
+                        <input type="number" class="form-input" id="antibot-min-age" min="0" max="365" value="7">
+                        <small class="text-muted">0 = désactivé</small>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antibot-action">
+                          <option value="warn">Avertir (log uniquement)</option>
+                          <option value="kick" selected>Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">🔍 Critères de détection</label>
+                      <div class="checkbox-group">
+                        <label class="checkbox-label">
+                          <input type="checkbox" id="antibot-no-avatar">
+                          Compte sans avatar personnalisé
+                        </label>
+                        <label class="checkbox-label">
+                          <input type="checkbox" id="antibot-suspicious-name">
+                          Nom suspect (pattern de bot type "user1234")
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Mass Join -->
+                <div class="antiraid-module" id="module-antimassj">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">👥</span>
+                      <span>Anti-Mass Join (Raid)</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antimassj-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Détecte quand trop de membres rejoignent en peu de temps (raid).</p>
+                    
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">👥 Membres max</label>
+                        <input type="number" class="form-input" id="antimassj-max" min="3" max="50" value="10">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">⏱️ Intervalle (secondes)</label>
+                        <input type="number" class="form-input" id="antimassj-interval" min="5" max="120" value="10">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">⚡ Action sur les nouveaux membres pendant le raid</label>
+                      <select class="form-select" id="antimassj-action">
+                        <option value="warn">Log uniquement</option>
+                        <option value="kick" selected>Expulser</option>
+                        <option value="ban">Bannir</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Anti-Badwords -->
+                <div class="antiraid-module" id="module-antibadwords">
+                  <div class="antiraid-module-header">
+                    <div class="antiraid-module-title">
+                      <span class="antiraid-icon">🤬</span>
+                      <span>Anti-Gros Mots</span>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="antibadwords-enabled">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                  <div class="antiraid-module-body">
+                    <p class="text-muted">Bloque les messages contenant des insultes ou gros mots.</p>
+                    
+                    <div class="form-group">
+                      <label class="form-label">📝 Liste des mots interdits</label>
+                      <textarea class="form-input" id="antibadwords-words" rows="3" placeholder="Entrez les mots interdits, un par ligne ou séparés par des virgules"></textarea>
+                      <small class="text-muted">Le système détecte aussi les variantes avec caractères spéciaux (ex: m3rde)</small>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">⚡ Action</label>
+                        <select class="form-select" id="antibadwords-action">
+                          <option value="delete" selected>Supprimer le message</option>
+                          <option value="warn">Avertir l'utilisateur</option>
+                          <option value="mute">Mute temporaire</option>
+                          <option value="kick">Expulser</option>
+                          <option value="ban">Bannir</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">💬 Message d'avertissement</label>
+                        <input type="text" class="form-input" id="antibadwords-warn-message" placeholder="⚠️ Les insultes ne sont pas autorisées." value="⚠️ Les insultes et gros mots ne sont pas autorisés.">
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label">🚫 Salons exclus</label>
+                        <select class="form-select multi-select" id="antibadwords-exclude-channels" multiple></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">👑 Rôles exclus</label>
+                        <select class="form-select multi-select" id="antibadwords-exclude-roles" multiple></select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Section Sanctions automatiques -->
+              <div class="config-card" style="margin-top: 1.5rem;">
+                <div class="config-card-header">
+                  <div class="config-card-title">
+                    <span class="icon">⚠️</span>
+                    <h3>Sanctions automatiques (Warns)</h3>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="warnings-enabled">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="config-card-body">
+                  <p class="text-muted" style="margin-bottom: 1.5rem;">
+                    Configurez les sanctions automatiques en fonction du nombre d'avertissements.
+                  </p>
+
+                  <div class="warnings-config">
+                    <!-- Warn 1 -->
+                    <div class="warning-level">
+                      <div class="warning-level-header">
+                        <span class="warning-badge">1 Warn</span>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label class="form-label">⚡ Action</label>
+                          <select class="form-select" id="warn1-action">
+                            <option value="none" selected>Aucune</option>
+                            <option value="mute">Mute</option>
+                            <option value="kick">Expulser</option>
+                            <option value="ban">Bannir</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">⏱️ Durée (minutes)</label>
+                          <input type="number" class="form-input" id="warn1-duration" min="1" max="10080" value="10">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Warn 2 -->
+                    <div class="warning-level">
+                      <div class="warning-level-header">
+                        <span class="warning-badge">2 Warns</span>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label class="form-label">⚡ Action</label>
+                          <select class="form-select" id="warn2-action">
+                            <option value="none" selected>Aucune</option>
+                            <option value="mute">Mute</option>
+                            <option value="kick">Expulser</option>
+                            <option value="ban">Bannir</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">⏱️ Durée (minutes)</label>
+                          <input type="number" class="form-input" id="warn2-duration" min="1" max="10080" value="30">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Warn 3 -->
+                    <div class="warning-level">
+                      <div class="warning-level-header">
+                        <span class="warning-badge">3 Warns</span>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label class="form-label">⚡ Action</label>
+                          <select class="form-select" id="warn3-action">
+                            <option value="none">Aucune</option>
+                            <option value="mute" selected>Mute</option>
+                            <option value="kick">Expulser</option>
+                            <option value="ban">Bannir</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">⏱️ Durée (minutes)</label>
+                          <input type="number" class="form-input" id="warn3-duration" min="1" max="10080" value="60">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Warn 4 -->
+                    <div class="warning-level">
+                      <div class="warning-level-header">
+                        <span class="warning-badge">4 Warns</span>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label class="form-label">⚡ Action</label>
+                          <select class="form-select" id="warn4-action">
+                            <option value="none">Aucune</option>
+                            <option value="mute">Mute</option>
+                            <option value="kick" selected>Expulser</option>
+                            <option value="ban">Bannir</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">⏱️ Durée (minutes)</label>
+                          <input type="number" class="form-input" id="warn4-duration" min="1" max="10080" value="0" disabled>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Warn 5+ -->
+                    <div class="warning-level">
+                      <div class="warning-level-header">
+                        <span class="warning-badge warning-badge-danger">5+ Warns</span>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group">
+                          <label class="form-label">⚡ Action</label>
+                          <select class="form-select" id="warn5-action">
+                            <option value="none">Aucune</option>
+                            <option value="mute">Mute</option>
+                            <option value="kick">Expulser</option>
+                            <option value="ban" selected>Bannir</option>
+                          </select>
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label">⏱️ Durée (minutes)</label>
+                          <input type="number" class="form-input" id="warn5-duration" min="1" max="10080" value="0" disabled>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Options supplémentaires -->
+                  <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="form-label">⚙️ Options</label>
+                    <div class="checkbox-group">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="warnings-decay-enabled">
+                        Expiration des warns après un certain temps
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="form-row" id="warnings-decay-options" style="display: none;">
+                    <div class="form-group">
+                      <label class="form-label">📅 Expiration après (jours)</label>
+                      <input type="number" class="form-input" id="warnings-decay-days" min="1" max="365" value="30">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">📜 Salon de notifications</label>
+                    <select class="form-select" id="warnings-notify-channel">
+                      <option value="">Aucun (pas de notification)</option>
+                    </select>
+                    <small class="text-muted">Les sanctions automatiques seront notifiées dans ce salon.</small>
+                  </div>
+
+                  <div class="config-card-footer" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <div id="status-warnings-form" class="status-message"></div>
+                    <button type="button" class="btn btn-primary" id="warnings-save-btn">
+                      💾 Sauvegarder les sanctions
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="config-card-footer">
+              <div id="status-antiraid-form" class="status-message"></div>
+              <button type="button" class="btn btn-primary" id="antiraid-save-btn">
+                💾 Sauvegarder
+              </button>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
 
@@ -1198,5 +1919,6 @@
     <script src="/guild/sendMessageForm.js"></script>
     <script src="/guild/botAppearanceForm.js"></script>
     <script src="/guild/logsForm.js"></script>
+    <script src="/guild/antiraidForm.js"></script>
   </body>
 </html>
