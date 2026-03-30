@@ -1,49 +1,67 @@
-# LazyBot - Discord Bot 
+# LazyBot
 
-Bot Discord configurable via un dashboard web pour gérer :
-- Rôles automatiques (`autorole-newuser` et `autorole-vocal`)
-- Messages de bienvenue et d’au revoir
-- Sélection de salons vocaux à exclure
-- Multi-serveurs avec contrôle admin
+LazyBot est un bot Discord multi-serveurs avec dashboard web pour configurer facilement votre serveur.
 
----
+Site officiel: https://lazybot.arthurp.fr
+
+## Fonctionnalités
+
+- Commandes générales, économie, niveaux, modération et administration
+- Gestion d'autoroles (nouveaux membres et vocal)
+- Messages de bienvenue et d'au revoir personnalisables
+- Configuration anti-raid, logs, panels de roles, salons statistiques
+- Dashboard web pour piloter les options serveur
+
+## Stack
+
+- Node.js
+- Discord.js
+- SQLite
+- Docker et Docker Compose
 
 ## Installation
 
-1. Cloner le projet :  
+1. Cloner le projet
+
 ```bash
 git clone https://github.com/arthur-pbty/LazyBot.git
-cd mon-bot-discord
-````
+cd lazybot
+```
 
-3. Créer un fichier `.env` :
+2. Creer votre fichier d'environnement
+
+```bash
+cp .env.example .env
+```
+
+3. Renseigner les variables dans `.env`
 
 ```env
 CLIENT_ID=VOTRE_BOT_CLIENT_ID
 CLIENT_SECRET=VOTRE_BOT_CLIENT_SECRET
-REDIRECT_URI=https://your_domaine.com/auth/discord/callback
+REDIRECT_URI=https://lazybot.arthurp.fr/auth/discord/callback
 PORT=3000
 BOT_TOKEN=VOTRE_TOKEN_BOT
-SESSION_SECRET=un_secret_aleatoire_pour_les_sessions
+SESSION_SECRET=UN_SECRET_LONG_ET_UNIQUE
 DB_PATH=database.sqlite
 OWNER=VOTRE_ID_UTILISATEUR
-URL=https://ton-domaine.com
+URL=https://lazybot.arthurp.fr
 ```
 
-4. Lancer le serveur :
+4. Lancer avec Docker
 
 ```bash
 docker compose up -d --build
 ```
 
-* Serveur web : `http://localhost:3000`
-* Le bot se connecte automatiquement aux serveurs où il est invité.
+Le dashboard est ensuite disponible sur `http://localhost:3000`.
 
----
+## Securite avant publication
 
-## Fonctionnalités clés
+- Ne jamais versionner `.env`
+- Verifier que `.vscode/` reste ignore (ex: `sftp.json`)
+- Eviter de publier des tokens, secrets ou cles privees
 
-* Autoroles pour nouveaux membres et salons vocaux
-* Messages de bienvenue et d’au revoir personnalisables
-* Dashboard web pour configurer facilement chaque serveur
-* Pré-sélection automatique options anciennement remplit
+## Licence
+
+Projet prive par defaut. Ajouter une licence explicite si publication open source.

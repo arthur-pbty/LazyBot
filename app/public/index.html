@@ -5,7 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="LazyBot est un bot Discord puissant avec système de niveaux, économie, messages personnalisés et bien plus encore.">
-  <link rel="stylesheet" href="/index.css">
+  <!-- Preconnect CDN for avatars to reduce latency -->
+  <link rel="preconnect" href="https://cdn.discordapp.com" crossorigin>
+
+  <!-- Preload CSS and apply via onload to reduce render-blocking (noscript fallback) -->
+  <link rel="preload" href="/index.css" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/index.css"></noscript>
 </head>
 <body>
   <!-- Navigation -->
