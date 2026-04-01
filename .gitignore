@@ -74,6 +74,9 @@ web_modules/
 .env.*
 !.env.example
 
+# Docker volumes
+data/postgres/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

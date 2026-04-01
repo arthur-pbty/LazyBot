@@ -2,7 +2,7 @@ require("dotenv").config(); // charge les variables depuis .env
 
 const express = require("express");
 const session = require("express-session");
-const SQLiteStore = require("connect-sqlite3")(session);
+const PgSession = require("connect-pg-simple")(session);
 const fetch = require("cross-fetch"); // fetch compatible Node
 const path = require("path");
 
@@ -21,7 +21,11 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 
 // --- Session setup ---
 app.use(session({
-  store: new SQLiteStore({ db: "sessions.sqlite", dir: "./" }),
+  store: new PgSession({
+    pool: db.pool,
+    tableName: "user_sessions",
+    createTableIfMissing: true
+  }),
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,

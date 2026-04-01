@@ -238,8 +238,9 @@ async function trackVoiceTime(guildId, userId, oldState, newState) {
   if (newState.channelId && !oldState.channelId) {
     // Save join timestamp
     db.run(
-      `INSERT OR REPLACE INTO voice_sessions (guild_id, user_id, join_timestamp)
-       VALUES (?, ?, ?)`,
+      `INSERT INTO voice_sessions (guild_id, user_id, join_timestamp)
+       VALUES (?, ?, ?)
+       ON CONFLICT (guild_id, user_id) DO UPDATE SET join_timestamp = EXCLUDED.join_timestamp`,
       [guildId, userId, Date.now()]
     );
   }

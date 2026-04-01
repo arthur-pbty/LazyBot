@@ -1,34 +1,29 @@
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
+const { Pool } = require("pg");
 
-const db = new sqlite3.Database(
-  path.join(__dirname, process.env.DB_PATH || "database.sqlite"),
-  err => {
-    if (err) console.error("Erreur DB:", err);
-    else console.log("DB SQLite connectée");
-  }
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  host: process.env.POSTGRES_HOST,
+  port: process.env.POSTGRES_PORT ? Number(process.env.POSTGRES_PORT) : undefined,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DB,
+});
 
-db.getAsync = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
+const TABLES_WITH_ID = new Set([
+  "shop_items",
+  "user_inventory",
+  "stats_channels",
+  "user_activity_stats",
+  "username_history",
+  "nickname_history",
+  "antiraid_warnings",
+  "warnings",
+  "scheduled_messages",
+  "role_panels",
+  "role_panel_buttons",
+]);
 
-db.allAsync = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-};
-
-// Création de la table si elle n'existe pas
-db.exec(`
+const schemaSql = `
   CREATE TABLE IF NOT EXISTS welcome_config (
     guild_id TEXT PRIMARY KEY,
     channel_id TEXT,
@@ -106,7 +101,7 @@ db.exec(`
     user_id TEXT NOT NULL,
     xp INTEGER NOT NULL,
     level INTEGER NOT NULL,
-    last_xp_message_timestamp INTEGER,
+    last_xp_message_timestamp BIGINT,
     PRIMARY KEY (guild_id, user_id)
   );
 
@@ -155,32 +150,32 @@ db.exec(`
     user_id TEXT NOT NULL,
     balance INTEGER NOT NULL DEFAULT 0,
     bank INTEGER NOT NULL DEFAULT 0,
-    last_daily_timestamp INTEGER,
-    last_work_timestamp INTEGER,
-    last_crime_timestamp INTEGER,
-    last_steal_timestamp INTEGER,
-    last_message_money_timestamp INTEGER,
+    last_daily_timestamp BIGINT,
+    last_work_timestamp BIGINT,
+    last_crime_timestamp BIGINT,
+    last_steal_timestamp BIGINT,
+    last_message_money_timestamp BIGINT,
     PRIMARY KEY (guild_id, user_id)
   );
 
   CREATE TABLE IF NOT EXISTS shop_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     price INTEGER NOT NULL,
     role_id TEXT,
     stock INTEGER DEFAULT -1,
-    created_at INTEGER NOT NULL
+    created_at BIGINT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS user_inventory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
-    item_id INTEGER NOT NULL,
+    item_id BIGINT NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
-    purchased_at INTEGER NOT NULL,
+    purchased_at BIGINT NOT NULL,
     FOREIGN KEY (item_id) REFERENCES shop_items(id)
   );
 
@@ -196,7 +191,7 @@ db.exec(`
     channel_id TEXT PRIMARY KEY,
     guild_id TEXT NOT NULL,
     owner_id TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at BIGINT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS counting_config (
@@ -208,7 +203,7 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS stats_channels (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     channel_id TEXT NOT NULL,
     stat_type TEXT NOT NULL,
@@ -218,7 +213,7 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS user_activity_stats (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     stat_type TEXT NOT NULL,
@@ -230,7 +225,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS voice_sessions (
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
-    join_timestamp INTEGER NOT NULL,
+    join_timestamp BIGINT NOT NULL,
     PRIMARY KEY(guild_id, user_id)
   );
 
@@ -259,21 +254,21 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS username_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     user_id TEXT NOT NULL,
     username TEXT NOT NULL,
     display_name TEXT,
-    changed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    changed_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
   CREATE INDEX IF NOT EXISTS idx_username_history_user ON username_history(user_id, changed_at DESC);
 
   CREATE TABLE IF NOT EXISTS nickname_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     nickname TEXT,
-    changed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    changed_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
   CREATE INDEX IF NOT EXISTS idx_nickname_history_user ON nickname_history(guild_id, user_id, changed_at DESC);
@@ -282,23 +277,20 @@ db.exec(`
     guild_id TEXT PRIMARY KEY,
     enabled INTEGER NOT NULL DEFAULT 0,
     log_channel_id TEXT,
-    
-    -- Anti-link
+
     antilink_enabled INTEGER NOT NULL DEFAULT 0,
     antilink_action TEXT NOT NULL DEFAULT 'delete',
     antilink_whitelist_domains TEXT DEFAULT '[]',
     antilink_exclude_channels TEXT DEFAULT '[]',
     antilink_exclude_roles TEXT DEFAULT '[]',
     antilink_warn_message TEXT DEFAULT '⚠️ Les liens ne sont pas autorisés ici.',
-    
-    -- Anti-invite (liens Discord)
+
     antiinvite_enabled INTEGER NOT NULL DEFAULT 0,
     antiinvite_action TEXT NOT NULL DEFAULT 'delete',
     antiinvite_allow_own_server INTEGER NOT NULL DEFAULT 1,
     antiinvite_exclude_channels TEXT DEFAULT '[]',
     antiinvite_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-spam
+
     antispam_enabled INTEGER NOT NULL DEFAULT 0,
     antispam_action TEXT NOT NULL DEFAULT 'mute',
     antispam_max_messages INTEGER NOT NULL DEFAULT 5,
@@ -306,59 +298,51 @@ db.exec(`
     antispam_mute_duration_minutes INTEGER NOT NULL DEFAULT 10,
     antispam_exclude_channels TEXT DEFAULT '[]',
     antispam_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-duplicate (messages identiques)
+
     antidupe_enabled INTEGER NOT NULL DEFAULT 0,
     antidupe_action TEXT NOT NULL DEFAULT 'delete',
     antidupe_max_duplicates INTEGER NOT NULL DEFAULT 3,
     antidupe_interval_seconds INTEGER NOT NULL DEFAULT 60,
     antidupe_exclude_channels TEXT DEFAULT '[]',
     antidupe_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-mass mention
+
     antimention_enabled INTEGER NOT NULL DEFAULT 0,
     antimention_action TEXT NOT NULL DEFAULT 'delete',
     antimention_max_mentions INTEGER NOT NULL DEFAULT 5,
     antimention_exclude_channels TEXT DEFAULT '[]',
     antimention_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-mass emoji
+
     antiemoji_enabled INTEGER NOT NULL DEFAULT 0,
     antiemoji_action TEXT NOT NULL DEFAULT 'delete',
     antiemoji_max_emojis INTEGER NOT NULL DEFAULT 10,
     antiemoji_exclude_channels TEXT DEFAULT '[]',
     antiemoji_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-caps (majuscules)
+
     anticaps_enabled INTEGER NOT NULL DEFAULT 0,
     anticaps_action TEXT NOT NULL DEFAULT 'delete',
     anticaps_max_percent INTEGER NOT NULL DEFAULT 70,
     anticaps_min_length INTEGER NOT NULL DEFAULT 10,
     anticaps_exclude_channels TEXT DEFAULT '[]',
     anticaps_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-bot join
+
     antibot_enabled INTEGER NOT NULL DEFAULT 0,
     antibot_action TEXT NOT NULL DEFAULT 'kick',
     antibot_min_account_age_days INTEGER NOT NULL DEFAULT 7,
     antibot_no_avatar_action INTEGER NOT NULL DEFAULT 0,
     antibot_suspicious_name_action INTEGER NOT NULL DEFAULT 0,
-    
-    -- Anti-mass join (raid de comptes)
+
     antimassj_enabled INTEGER NOT NULL DEFAULT 0,
     antimassj_action TEXT NOT NULL DEFAULT 'kick',
     antimassj_max_joins INTEGER NOT NULL DEFAULT 10,
     antimassj_interval_seconds INTEGER NOT NULL DEFAULT 10,
     antimassj_lockdown_duration_minutes INTEGER NOT NULL DEFAULT 5,
-    
-    -- Anti-newline spam
+
     antinewline_enabled INTEGER NOT NULL DEFAULT 0,
     antinewline_action TEXT NOT NULL DEFAULT 'delete',
     antinewline_max_lines INTEGER NOT NULL DEFAULT 15,
     antinewline_exclude_channels TEXT DEFAULT '[]',
     antinewline_exclude_roles TEXT DEFAULT '[]',
-    
-    -- Anti-badwords (gros mots)
+
     antibadwords_enabled INTEGER NOT NULL DEFAULT 0,
     antibadwords_action TEXT NOT NULL DEFAULT 'delete',
     antibadwords_words TEXT DEFAULT '[]',
@@ -368,29 +352,27 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS antiraid_warnings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     warning_type TEXT NOT NULL,
-    warned_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    warned_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
   CREATE INDEX IF NOT EXISTS idx_antiraid_warnings ON antiraid_warnings(guild_id, user_id, warning_type, warned_at);
 
-  -- Table des warns utilisateurs
   CREATE TABLE IF NOT EXISTS warnings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     moderator_id TEXT NOT NULL,
     reason TEXT NOT NULL,
     source TEXT DEFAULT 'manual',
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
   CREATE INDEX IF NOT EXISTS idx_warnings ON warnings(guild_id, user_id, created_at DESC);
 
-  -- Configuration des sanctions automatiques par warns
   CREATE TABLE IF NOT EXISTS warnings_config (
     guild_id TEXT PRIMARY KEY,
     enabled INTEGER NOT NULL DEFAULT 0,
@@ -411,7 +393,7 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS scheduled_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     channel_id TEXT NOT NULL,
     message_content TEXT NOT NULL,
@@ -427,15 +409,14 @@ db.exec(`
     force_send INTEGER NOT NULL DEFAULT 1,
     delete_previous INTEGER NOT NULL DEFAULT 0,
     enabled INTEGER NOT NULL DEFAULT 1,
-    last_sent_at INTEGER,
+    last_sent_at BIGINT,
     last_message_id TEXT,
-    last_channel_activity INTEGER,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    last_channel_activity BIGINT,
+    created_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
-  -- Système de rôles par boutons
   CREATE TABLE IF NOT EXISTS role_panels (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     guild_id TEXT NOT NULL,
     channel_id TEXT NOT NULL,
     message_id TEXT,
@@ -449,12 +430,12 @@ db.exec(`
     exclusive INTEGER NOT NULL DEFAULT 0,
     required_role_id TEXT,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    created_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW())::BIGINT)
   );
 
   CREATE TABLE IF NOT EXISTS role_panel_buttons (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    panel_id INTEGER NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    panel_id BIGINT NOT NULL,
     role_id TEXT NOT NULL,
     label TEXT NOT NULL,
     emoji TEXT,
@@ -463,60 +444,181 @@ db.exec(`
     enabled INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY (panel_id) REFERENCES role_panels(id) ON DELETE CASCADE
   );
-`);
 
-// Migration: Ajouter les nouvelles colonnes pour welcome/goodbye si elles n'existent pas
-const migrateWelcomeGoodbye = () => {
-  // Colonnes à ajouter pour welcome_config
-  const welcomeColumns = [
-    { name: 'message_type', sql: "ALTER TABLE welcome_config ADD COLUMN message_type TEXT NOT NULL DEFAULT 'embed'" },
-    { name: 'embed_title', sql: "ALTER TABLE welcome_config ADD COLUMN embed_title TEXT" },
-    { name: 'embed_description', sql: "ALTER TABLE welcome_config ADD COLUMN embed_description TEXT" },
-    { name: 'embed_color', sql: "ALTER TABLE welcome_config ADD COLUMN embed_color TEXT DEFAULT '#57F287'" },
-    { name: 'embed_thumbnail', sql: "ALTER TABLE welcome_config ADD COLUMN embed_thumbnail INTEGER NOT NULL DEFAULT 1" },
-    { name: 'embed_footer', sql: "ALTER TABLE welcome_config ADD COLUMN embed_footer TEXT" },
-    { name: 'image_enabled', sql: "ALTER TABLE welcome_config ADD COLUMN image_enabled INTEGER NOT NULL DEFAULT 0" },
-    { name: 'image_gradient', sql: "ALTER TABLE welcome_config ADD COLUMN image_gradient TEXT DEFAULT 'purple'" },
-    { name: 'image_title', sql: "ALTER TABLE welcome_config ADD COLUMN image_title TEXT" },
-    { name: 'image_subtitle', sql: "ALTER TABLE welcome_config ADD COLUMN image_subtitle TEXT" },
-    { name: 'image_show_member_count', sql: "ALTER TABLE welcome_config ADD COLUMN image_show_member_count INTEGER NOT NULL DEFAULT 1" }
-  ];
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS message_type TEXT NOT NULL DEFAULT 'embed';
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS embed_title TEXT;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS embed_description TEXT;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS embed_color TEXT DEFAULT '#57F287';
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS embed_thumbnail INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS embed_footer TEXT;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS image_enabled INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS image_gradient TEXT DEFAULT 'purple';
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS image_title TEXT;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS image_subtitle TEXT;
+  ALTER TABLE IF EXISTS welcome_config ADD COLUMN IF NOT EXISTS image_show_member_count INTEGER NOT NULL DEFAULT 1;
 
-  // Colonnes à ajouter pour goodbye_config
-  const goodbyeColumns = [
-    { name: 'message_type', sql: "ALTER TABLE goodbye_config ADD COLUMN message_type TEXT NOT NULL DEFAULT 'embed'" },
-    { name: 'embed_title', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_title TEXT" },
-    { name: 'embed_description', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_description TEXT" },
-    { name: 'embed_color', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_color TEXT DEFAULT '#ED4245'" },
-    { name: 'embed_thumbnail', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_thumbnail INTEGER NOT NULL DEFAULT 1" },
-    { name: 'embed_footer', sql: "ALTER TABLE goodbye_config ADD COLUMN embed_footer TEXT" },
-    { name: 'image_enabled', sql: "ALTER TABLE goodbye_config ADD COLUMN image_enabled INTEGER NOT NULL DEFAULT 0" },
-    { name: 'image_gradient', sql: "ALTER TABLE goodbye_config ADD COLUMN image_gradient TEXT DEFAULT 'red'" },
-    { name: 'image_title', sql: "ALTER TABLE goodbye_config ADD COLUMN image_title TEXT" },
-    { name: 'image_subtitle', sql: "ALTER TABLE goodbye_config ADD COLUMN image_subtitle TEXT" },
-    { name: 'image_show_member_count', sql: "ALTER TABLE goodbye_config ADD COLUMN image_show_member_count INTEGER NOT NULL DEFAULT 1" }
-  ];
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS message_type TEXT NOT NULL DEFAULT 'embed';
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS embed_title TEXT;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS embed_description TEXT;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS embed_color TEXT DEFAULT '#ED4245';
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS embed_thumbnail INTEGER NOT NULL DEFAULT 1;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS embed_footer TEXT;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS image_enabled INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS image_gradient TEXT DEFAULT 'red';
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS image_title TEXT;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS image_subtitle TEXT;
+  ALTER TABLE IF EXISTS goodbye_config ADD COLUMN IF NOT EXISTS image_show_member_count INTEGER NOT NULL DEFAULT 1;
+`;
 
-  // Exécuter les migrations pour welcome_config
-  welcomeColumns.forEach(col => {
-    db.run(col.sql, (err) => {
-      if (err && !err.message.includes('duplicate column')) {
-        // Ignorer les erreurs de colonnes dupliquées
+function convertPlaceholders(sql) {
+  let index = 1;
+  let out = "";
+  let inSingleQuote = false;
+
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+
+    if (char === "'") {
+      if (inSingleQuote && sql[i + 1] === "'") {
+        out += "''";
+        i += 1;
+        continue;
       }
-    });
-  });
+      inSingleQuote = !inSingleQuote;
+      out += char;
+      continue;
+    }
 
-  // Exécuter les migrations pour goodbye_config
-  goodbyeColumns.forEach(col => {
-    db.run(col.sql, (err) => {
-      if (err && !err.message.includes('duplicate column')) {
-        // Ignorer les erreurs de colonnes dupliquées
-      }
-    });
-  });
+    if (!inSingleQuote && char === "?") {
+      out += `$${index}`;
+      index += 1;
+      continue;
+    }
+
+    out += char;
+  }
+
+  return out;
+}
+
+function normalizeArgs(params, callback) {
+  if (typeof params === "function") {
+    return { params: [], callback: params };
+  }
+  return { params: Array.isArray(params) ? params : [], callback };
+}
+
+function maybeAddReturningId(sql) {
+  if (/\breturning\b/i.test(sql)) {
+    return sql;
+  }
+
+  const match = sql.match(/^\s*INSERT\s+INTO\s+([A-Za-z_][A-Za-z0-9_]*)/i);
+  if (!match) {
+    return sql;
+  }
+
+  const tableName = match[1].toLowerCase();
+  if (!TABLES_WITH_ID.has(tableName)) {
+    return sql;
+  }
+
+  return `${sql.trim()} RETURNING id`;
+}
+
+const db = {
+  async exec(sql, callback) {
+    try {
+      await pool.query(sql);
+      if (callback) callback(null);
+    } catch (err) {
+      if (callback) callback(err);
+      else throw err;
+    }
+  },
+
+  run(sql, params, callback) {
+    const normalized = normalizeArgs(params, callback);
+    const sqlWithReturning = maybeAddReturningId(convertPlaceholders(sql));
+
+    pool
+      .query(sqlWithReturning, normalized.params)
+      .then((result) => {
+        const stmt = {
+          lastID: result.rows[0] ? result.rows[0].id : undefined,
+          changes: result.rowCount,
+        };
+
+        if (normalized.callback) {
+          normalized.callback.call(stmt, null);
+        }
+      })
+      .catch((err) => {
+        if (normalized.callback) {
+          normalized.callback.call({ lastID: undefined, changes: 0 }, err);
+          return;
+        }
+        console.error("Erreur SQL (run):", err);
+      });
+  },
+
+  get(sql, params, callback) {
+    const normalized = normalizeArgs(params, callback);
+
+    pool
+      .query(convertPlaceholders(sql), normalized.params)
+      .then((result) => {
+        if (normalized.callback) {
+          normalized.callback(null, result.rows[0]);
+        }
+      })
+      .catch((err) => {
+        if (normalized.callback) {
+          normalized.callback(err, undefined);
+          return;
+        }
+        console.error("Erreur SQL (get):", err);
+      });
+  },
+
+  all(sql, params, callback) {
+    const normalized = normalizeArgs(params, callback);
+
+    pool
+      .query(convertPlaceholders(sql), normalized.params)
+      .then((result) => {
+        if (normalized.callback) {
+          normalized.callback(null, result.rows);
+        }
+      })
+      .catch((err) => {
+        if (normalized.callback) {
+          normalized.callback(err, []);
+          return;
+        }
+        console.error("Erreur SQL (all):", err);
+      });
+  },
+
+  getAsync(sql, params = []) {
+    return pool.query(convertPlaceholders(sql), params).then((result) => result.rows[0]);
+  },
+
+  allAsync(sql, params = []) {
+    return pool.query(convertPlaceholders(sql), params).then((result) => result.rows);
+  },
+
+  pool,
 };
 
-// Exécuter la migration
-migrateWelcomeGoodbye();
+(async () => {
+  try {
+    await pool.query("SELECT 1");
+    console.log("DB PostgreSQL connectee");
+    await pool.query(schemaSql);
+  } catch (err) {
+    console.error("Erreur DB:", err);
+  }
+})();
 
 module.exports = db;

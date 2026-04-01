@@ -1,13 +1,27 @@
 services:
   web:
-    image: node:20
-    container_name: discord_bot_web
-    working_dir: /app
-    volumes:
-      - ./app:/app
-    ports:
-      - "${PORT}:${PORT}"
+    build: .
+    image: lazybot:latest
     env_file:
       - ./.env
-    command: sh -c "npm install && node server.js"
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ./.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lazybot} -d ${POSTGRES_DB:-lazybot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ${POSTGRES_DATA_PATH:-./data/postgres}:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes: {}
