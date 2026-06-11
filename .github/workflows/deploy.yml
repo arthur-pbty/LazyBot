@@ -1,0 +1,27 @@
+name: Deploy Docker
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy on server
+        run: |
+          set -e
+
+          echo "Go to app folder"
+          cd /opt/apps/lazybot
+
+          echo "Pull latest code"
+          git pull origin main
+
+          echo "Build & restart containers"
+          docker compose down || true
+          docker compose build
+          docker compose up -d
+
+          echo "Deploy finished"
